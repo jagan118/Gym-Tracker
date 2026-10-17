@@ -53,7 +53,12 @@ export default function RegisterPage() {
       login(res.data.token, res.data.user);
       navigate('/', { replace: true });
     } catch (err) {
-      setError(err.response?.data?.message || 'Google sign-up failed. Please try again.');
+      setError(
+        err.response?.data?.message ||
+        (!err.response
+          ? 'Could not reach the API. Check that the server is running and allows this local origin.'
+          : 'Google sign-up failed. Please try again.')
+      );
     } finally {
       setGoogleLoading(false);
     }

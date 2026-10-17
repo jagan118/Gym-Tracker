@@ -22,7 +22,7 @@ const allowedOrigins = [
 ].filter(Boolean);
 
 const isDevelopmentOrigin = (origin) => {
-  if (process.env.NODE_ENV !== 'development') return false;
+  if (process.env.NODE_ENV === 'production') return false;
 
   try {
     const url = new URL(origin);
