@@ -98,7 +98,9 @@ VITE_GOOGLE_CLIENT_ID=your-google-client-id.apps.googleusercontent.com
 ```
 
 Keep `VITE_API_URL` empty for local development so Vite proxies `/api` requests
-to `http://localhost:5000`. Set it to the deployed API URL only for production.
+to `http://localhost:5000`. In production, set it to the backend origin only,
+for example `https://gym-tracker-api-1824.onrender.com` (not a URL ending in `/api`).
+The client adds `/api` to all endpoint paths.
 
 Workouts are stored in MongoDB with the verified account's user ID. On Google sign-in,
 the server finds the same account by Google's stable subject ID (or links an existing
@@ -109,6 +111,11 @@ want records to persist across machines and days.
 
 After signing in with Google, set or update an email/password login from the
 Account page. Passwords must be at least 8 characters.
+
+Password reset emails use SMTP. Configure `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`,
+`SMTP_USER`, `SMTP_PASS`, and `SMTP_FROM` in `server/.env` (or the backend
+deployment environment). Reset codes expire after 10 minutes, allow five
+verification attempts, and can be re-sent once per minute.
 
 ---
 
@@ -188,6 +195,8 @@ Gym Tracker/
 | POST | `/api/auth/register` | Register with name, email, password |
 | POST | `/api/auth/login` | Login with email + password |
 | POST | `/api/auth/google` | Google OAuth |
+| POST | `/api/auth/forgot-password` | Email a one-time password reset code |
+| POST | `/api/auth/reset-password` | Reset password with email, code, and new password |
 | POST | `/api/auth/password` | Set/update a password for a signed-in Google-linked account |
 | POST | `/api/auth/logout` | Logout |
 | GET | `/api/auth/me` | Get current user |

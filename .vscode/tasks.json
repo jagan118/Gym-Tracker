@@ -31,7 +31,7 @@
 			"problemMatcher": []
 		},
 		{
-			"label": "GymLog Google Auth Tests",
+			"label": "GymLog Auth Tests",
 			"type": "shell",
 			"command": "npm",
 			"args": [
@@ -42,7 +42,9 @@
 				"--runTestsByPath",
 				"__tests__/googleVerify.test.js",
 				"__tests__/googleAuth.test.js",
-				"__tests__/setPassword.test.js"
+				"__tests__/setPassword.test.js",
+				"__tests__/passwordReset.test.js",
+				"__tests__/health.test.js"
 			],
 			"isBackground": false,
 			"problemMatcher": []

@@ -83,6 +83,13 @@ app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/workouts', apiLimiter, workoutRoutes);
 
 // Health check endpoint
+app.get('/', (req, res) => {
+  res.json({
+    status: 'ok',
+    message: 'Gym Tracker API is running. API routes are available under /api.',
+  });
+});
+
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
