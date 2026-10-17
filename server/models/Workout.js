@@ -28,7 +28,7 @@ const workoutSchema = new mongoose.Schema(
       type: String,
       trim: true,
       default: 'Other',
-      enum: ['Chest', 'Back', 'Shoulders', 'Arms', 'Legs', 'Core', 'Cardio', 'Other'],
+      enum: ['Chest', 'Tricep', 'Back', 'Bicep', 'Leg', 'Shoulder', 'Core', 'Cardio', 'Shoulders', 'Arms', 'Legs', 'Other'],
     },
 
     // Optional variation — e.g. "Incline", "Wide-Grip", "Sumo"
@@ -48,22 +48,29 @@ const workoutSchema = new mongoose.Schema(
     // Weight in kg — 0 is valid for bodyweight exercises
     weightKg: {
       type: Number,
-      required: [true, 'Weight is required'],
+      required: [function () { return this.muscleGroup !== 'Cardio'; }, 'Weight is required'],
       min: [0, 'Weight cannot be negative'],
     },
 
     sets: {
       type: Number,
-      required: [true, 'Number of sets is required'],
+      required: [function () { return this.muscleGroup !== 'Cardio'; }, 'Number of sets is required'],
       min: [1, 'Sets must be at least 1'],
       max: [100, 'Sets must be 100 or fewer'],
     },
 
     repsPerSet: {
       type: Number,
-      required: [true, 'Reps per set is required'],
+      required: [function () { return this.muscleGroup !== 'Cardio'; }, 'Reps per set is required'],
       min: [1, 'Reps must be at least 1'],
       max: [10000, 'Reps per set must be 10,000 or fewer'],
+    },
+
+    stepsCount: {
+      type: Number,
+      required: [function () { return this.muscleGroup === 'Cardio'; }, 'Step count is required for cardio'],
+      min: [1, 'Step count must be at least 1'],
+      max: [1000000, 'Step count must be 1,000,000 or fewer'],
     },
   },
   {

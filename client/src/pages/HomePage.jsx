@@ -1,19 +1,15 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { addDays, format, parseISO, startOfWeek, subDays } from 'date-fns';
+import { format, subDays } from 'date-fns';
 import { workoutAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import TabBar from '../components/TabBar';
 import AddWorkoutSheet from '../components/AddWorkoutSheet';
 import ConfirmDialog from '../components/ConfirmDialog';
-import WorkoutReminderSettings from '../components/WorkoutReminderSettings';
+import RestTimer from '../components/RestTimer';
+import ConsistencyGraph from '../components/ConsistencyGraph';
 import useExerciseSearch from '../hooks/useExerciseSearch';
 import { GROUP_COLORS } from '../constants/Musclegroups';
-import {
-  notifyReminderSettingsChanged,
-  notifyWorkoutDataChanged,
-  readWorkoutReminderSettings,
-} from '../utils/workoutReminders';
 
 function readHiddenGroups(storageKey) {
   try {
@@ -25,18 +21,8 @@ function readHiddenGroups(storageKey) {
   }
 }
 
-function readWeeklyGoal(storageKey) {
-  try {
-    const value = Number(localStorage.getItem(storageKey));
-    return Number.isInteger(value) && value >= 1 && value <= 7 ? value : 3;
-  } catch (error) {
-    console.warn('Could not read weekly workout goal', error);
-    return 3;
-  }
-}
-
 function GroupCard({ group, onOpen, onHide }) {
-  const color = GROUP_COLORS[group.muscleGroup] || GROUP_COLORS.Other;
+  const color = GROUP_COLORS[group.muscleGroup] || '#818cf8';
   const dateStr = (() => {
     try { return format(new Date(group.lastDate), 'MMM d'); } catch { return ''; }
   })();
@@ -71,17 +57,11 @@ export default function HomePage() {
   const { user } = useAuth();
   const userId = user?.id || user?._id || 'unknown';
   const hiddenGroupsKey = `gymlog_hidden_groups_${userId}`;
-  const weeklyGoalKey = `gymlog_weekly_goal_${userId}`;
-  const reminderSettingsKey = `gymlog_workout_reminders_${userId}`;
   const [groups, setGroups] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
   const [search, setSearch] = useState('');
   const [hiddenGroups, setHiddenGroups] = useState(() => readHiddenGroups(hiddenGroupsKey));
-  const [weeklyGoal, setWeeklyGoal] = useState(() => readWeeklyGoal(weeklyGoalKey));
-  const [reminderSettings, setReminderSettings] = useState(() =>
-    readWorkoutReminderSettings(reminderSettingsKey)
-  );
   const [consistency, setConsistency] = useState({ workoutDates: [], invalidGroupCount: 0 });
   const [consistencyError, setConsistencyError] = useState('');
   const [cleanupError, setCleanupError] = useState('');
@@ -120,7 +100,7 @@ export default function HomePage() {
       });
     } catch (error) {
       console.error('Failed to load workout consistency', error);
-      setConsistencyError('Weekly goal and streak data could not be loaded.');
+      setConsistencyError('Workout consistency could not be loaded.');
     }
   }, []);
 
@@ -133,23 +113,6 @@ export default function HomePage() {
       console.error('Could not save hidden muscle groups', error);
     }
   }, [hiddenGroups, hiddenGroupsKey]);
-
-  useEffect(() => {
-    try {
-      localStorage.setItem(weeklyGoalKey, String(weeklyGoal));
-    } catch (error) {
-      console.error('Could not save weekly workout goal', error);
-    }
-  }, [weeklyGoal, weeklyGoalKey]);
-
-  useEffect(() => {
-    try {
-      localStorage.setItem(reminderSettingsKey, JSON.stringify(reminderSettings));
-    } catch (error) {
-      console.error('Could not save workout reminder settings', error);
-    }
-    notifyReminderSettingsChanged(userId, reminderSettings);
-  }, [reminderSettings, reminderSettingsKey, userId]);
 
   const visibleGroups = useMemo(
     () => groups.filter(group => !hiddenGroups.includes(group.muscleGroup)),
@@ -185,24 +148,13 @@ export default function HomePage() {
     const workoutDays = new Set(consistency.workoutDates);
     const today = new Date();
     const todayKey = format(today, 'yyyy-MM-dd');
-    const weekStart = startOfWeek(today, { weekStartsOn: 1 });
-    const weekEnd = addDays(weekStart, 6);
-    const thisWeekCount = new Set(consistency.workoutDates.filter(date => {
-      const workoutDay = parseISO(date);
-      return workoutDay >= weekStart && workoutDay <= today;
-    })).size;
     let streak = 0;
     let streakDay = workoutDays.has(todayKey) ? today : subDays(today, 1);
     while (workoutDays.has(format(streakDay, 'yyyy-MM-dd'))) {
       streak += 1;
       streakDay = subDays(streakDay, 1);
     }
-    return {
-      thisWeekCount,
-      streak,
-      weekStartLabel: format(weekStart, 'MMM d'),
-      weekEndLabel: format(weekEnd, 'MMM d'),
-    };
+    return { streak, today };
   }, [consistency.workoutDates]);
 
   const handleCleanupInvalidGroups = async () => {
@@ -210,7 +162,6 @@ export default function HomePage() {
     setCleanupError('');
     try {
       const response = await workoutAPI.deleteLegacyGroupWorkouts();
-      if (response.data.deletedCount > 0) notifyWorkoutDataChanged();
       setShowCleanupConfirm(false);
       await Promise.all([loadGroups(), loadConsistency()]);
       if (response.data.deletedCount === 0) {
@@ -235,53 +186,24 @@ export default function HomePage() {
             </div>
             <div className="welcome-message">
               <span>Welcome</span>
-              <strong>{user?.name?.split(/\s+/)[0] || 'back'}</strong>
+              <div className="welcome-name-row">
+                <strong>{user?.name?.split(/\s+/)[0] || 'back'}</strong>
+                <span className="home-streak" aria-label={`${weeklyStats.streak} day workout streak`}>
+                  {weeklyStats.streak} day streak
+                </span>
+              </div>
             </div>
           </div>
 
-          {!search.trim() && (
-            <section className="consistency-card" aria-label="Weekly workout goal and streak">
-              <div className="consistency-main">
-                <div className="consistency-heading">
-                  <div>
-                    <div className="consistency-title">Weekly goal</div>
-                    <div className="consistency-dates">{weeklyStats.weekStartLabel} – {weeklyStats.weekEndLabel}</div>
-                  </div>
-                  <label className="weekly-goal-select-label">
-                    <span className="sr-only">Workouts per week goal</span>
-                    <select
-                      className="weekly-goal-select"
-                      value={weeklyGoal}
-                      onChange={event => setWeeklyGoal(Number(event.target.value))}
-                      aria-label="Set weekly workout goal"
-                    >
-                      {[1, 2, 3, 4, 5, 6, 7].map(goal => (
-                        <option value={goal} key={goal}>{goal} / week</option>
-                      ))}
-                    </select>
-                  </label>
-                </div>
-                <div className="goal-progress-track" role="progressbar" aria-valuemin={0} aria-valuemax={weeklyGoal} aria-valuenow={Math.min(weeklyStats.thisWeekCount, weeklyGoal)}>
-                  <div className="goal-progress-fill" style={{ width: `${Math.min(100, (weeklyStats.thisWeekCount / weeklyGoal) * 100)}%` }} />
-                </div>
-                <div className="consistency-footer">
-                  <span>{weeklyStats.thisWeekCount} of {weeklyGoal} workouts</span>
-                  <span>{weeklyStats.thisWeekCount >= weeklyGoal ? 'Goal reached' : `${weeklyGoal - weeklyStats.thisWeekCount} to go`}</span>
-                </div>
-              </div>
-              <div className="streak-stat">
-                <strong>{weeklyStats.streak}</strong>
-                <span>day streak</span>
-              </div>
-              {consistencyError && <div className="home-inline-error" role="status">{consistencyError}</div>}
-            </section>
-          )}
+          <section className="home-rest-timer">
+            <RestTimer />
+          </section>
 
           {!search.trim() && (
-            <WorkoutReminderSettings
-              settings={reminderSettings}
-              onChange={setReminderSettings}
-            />
+            <>
+              <ConsistencyGraph workoutDates={consistency.workoutDates} today={weeklyStats.today} />
+              {consistencyError && <div className="home-inline-error" role="status">{consistencyError}</div>}
+            </>
           )}
 
           {/* Stats strip — only when there's data and no active search */}
@@ -351,8 +273,14 @@ export default function HomePage() {
                         {w.muscleGroup || 'Other'}
                       </div>
                       <div className="exercise-card-name">{w.exerciseName}</div>
-                      <div className="exercise-card-weight">{w.weightKg}<span> kg</span></div>
-                      <div className="exercise-card-meta">{w.sets} sets <span className="dot">·</span> {w.repsPerSet} reps</div>
+                      {w.muscleGroup === 'Cardio' ? (
+                        <div className="exercise-card-weight">{w.stepsCount ? w.stepsCount.toLocaleString() : '—'}<span> steps</span></div>
+                      ) : (
+                        <>
+                          <div className="exercise-card-weight">{w.weightKg}<span> kg</span></div>
+                          <div className="exercise-card-meta">{w.sets} sets <span className="dot">·</span> {w.repsPerSet} reps</div>
+                        </>
+                      )}
                       {w.variation && <div className="exercise-card-variation">{w.variation}</div>}
                     </div>
                   </div>

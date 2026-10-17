@@ -6,7 +6,7 @@ const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 const createWorkout = async (req, res, next) => {
   try {
-    const { exerciseName, muscleGroup, variation, workoutDate, weightKg, sets, repsPerSet } = req.body;
+    const { exerciseName, muscleGroup, variation, workoutDate, weightKg, sets, repsPerSet, stepsCount } = req.body;
 
     // userId is ALWAYS taken from the verified JWT, never from the request body
     const workout = await Workout.create({
@@ -19,6 +19,7 @@ const createWorkout = async (req, res, next) => {
       weightKg,
       sets,
       repsPerSet,
+      stepsCount,
     });
 
     res.status(201).json({ success: true, workout });
@@ -110,6 +111,7 @@ const getExerciseNames = async (req, res, next) => {
           weightKg: { $first: '$weightKg' },
           sets: { $first: '$sets' },
           repsPerSet: { $first: '$repsPerSet' },
+          stepsCount: { $first: '$stepsCount' },
           exerciseNameNormalized: { $first: '$exerciseNameNormalized' },
         },
       },
@@ -125,6 +127,7 @@ const getExerciseNames = async (req, res, next) => {
           weightKg: 1,
           sets: 1,
           repsPerSet: 1,
+          stepsCount: 1,
           exerciseNameNormalized: 1,
         },
       },
@@ -250,6 +253,7 @@ const getGroupExercises = async (req, res, next) => {
           lastWeight: { $first: '$weightKg' },
           lastSets: { $first: '$sets' },
           lastReps: { $first: '$repsPerSet' },
+          lastSteps: { $first: '$stepsCount' },
           totalSessions: { $sum: 1 },
         },
       },
@@ -265,6 +269,7 @@ const getGroupExercises = async (req, res, next) => {
           lastWeight: 1,
           lastSets: 1,
           lastReps: 1,
+          lastSteps: 1,
           totalSessions: 1,
         },
       },
@@ -326,7 +331,7 @@ const getWorkout = async (req, res, next) => {
 
 const updateWorkout = async (req, res, next) => {
   try {
-    const { exerciseName, muscleGroup, variation, workoutDate, weightKg, sets, repsPerSet } = req.body;
+    const { exerciseName, muscleGroup, variation, workoutDate, weightKg, sets, repsPerSet, stepsCount } = req.body;
 
     const updateData = {};
     if (exerciseName !== undefined) updateData.exerciseName = exerciseName;
@@ -336,6 +341,7 @@ const updateWorkout = async (req, res, next) => {
     if (weightKg !== undefined) updateData.weightKg = weightKg;
     if (sets !== undefined) updateData.sets = sets;
     if (repsPerSet !== undefined) updateData.repsPerSet = repsPerSet;
+    if (stepsCount !== undefined) updateData.stepsCount = stepsCount;
 
     // findOneAndUpdate with userId scope — only updates if user owns it
     const workout = await Workout.findOneAndUpdate(

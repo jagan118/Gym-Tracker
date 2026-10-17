@@ -17,6 +17,7 @@ const { protect } = require('../middleware/auth');
 const validate = require('../middleware/validate');
 
 const router = express.Router();
+const MUSCLE_GROUPS = ['Chest', 'Tricep', 'Back', 'Bicep', 'Leg', 'Shoulder', 'Core', 'Cardio'];
 
 // All workout routes require authentication
 router.use(protect);
@@ -47,12 +48,13 @@ router.post(
   '/',
   [
     body('exerciseName').trim().notEmpty().withMessage('Exercise name is required').isLength({ max: 150 }).withMessage('Exercise name too long'),
-    body('muscleGroup').notEmpty().withMessage('Muscle group is required').bail().isIn(['Chest', 'Back', 'Shoulders', 'Arms', 'Legs', 'Core', 'Cardio', 'Other']).withMessage('Invalid muscle group'),
+    body('muscleGroup').notEmpty().withMessage('Muscle group is required').bail().isIn(MUSCLE_GROUPS).withMessage('Invalid muscle group'),
     body('variation').optional().isLength({ max: 100 }).withMessage('Variation too long'),
     body('workoutDate').optional().isISO8601().withMessage('Invalid date format'),
-    body('weightKg').isFloat({ min: 0 }).withMessage('Weight must be 0 or greater'),
-    body('sets').isInt({ min: 1, max: 100 }).withMessage('Sets must be between 1 and 100'),
-    body('repsPerSet').isInt({ min: 1, max: 10000 }).withMessage('Reps must be between 1 and 10,000'),
+    body('weightKg').if((value, { req }) => req.body.muscleGroup !== 'Cardio').isFloat({ min: 0 }).withMessage('Weight must be 0 or greater'),
+    body('sets').if((value, { req }) => req.body.muscleGroup !== 'Cardio').isInt({ min: 1, max: 100 }).withMessage('Sets must be between 1 and 100'),
+    body('repsPerSet').if((value, { req }) => req.body.muscleGroup !== 'Cardio').isInt({ min: 1, max: 10000 }).withMessage('Reps must be between 1 and 10,000'),
+    body('stepsCount').if((value, { req }) => req.body.muscleGroup === 'Cardio').isInt({ min: 1, max: 1000000 }).withMessage('Step count must be between 1 and 1,000,000'),
   ],
   validate,
   createWorkout
@@ -67,12 +69,13 @@ router.put(
   [
     param('id').isMongoId().withMessage('Invalid workout ID'),
     body('exerciseName').optional().trim().notEmpty().withMessage('Exercise name cannot be empty').isLength({ max: 150 }),
-    body('muscleGroup').optional().isIn(['Chest', 'Back', 'Shoulders', 'Arms', 'Legs', 'Core', 'Cardio', 'Other']),
+    body('muscleGroup').optional().isIn(MUSCLE_GROUPS),
     body('variation').optional().isLength({ max: 100 }),
     body('workoutDate').optional().isISO8601().withMessage('Invalid date format'),
     body('weightKg').optional().isFloat({ min: 0 }).withMessage('Weight must be 0 or greater'),
     body('sets').optional().isInt({ min: 1, max: 100 }).withMessage('Sets must be between 1 and 100'),
     body('repsPerSet').optional().isInt({ min: 1, max: 10000 }),
+    body('stepsCount').optional().isInt({ min: 1, max: 1000000 }).withMessage('Step count must be between 1 and 1,000,000'),
   ],
   validate,
   updateWorkout

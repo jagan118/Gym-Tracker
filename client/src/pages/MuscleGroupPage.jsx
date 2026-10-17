@@ -82,10 +82,16 @@ export default function MuscleGroupPage() {
                   >
                     <div className="exercise-card-left">
                       <div className="exercise-card-name">{ex.exerciseName}</div>
-                      <div className="exercise-card-weight">{ex.lastWeight}<span> kg</span></div>
-                      <div className="exercise-card-meta">
-                        {ex.lastSets} sets <span className="dot">·</span> {ex.lastReps} reps
-                      </div>
+                      {decodedGroup === 'Cardio' ? (
+                        <div className="exercise-card-weight">{ex.lastSteps ? ex.lastSteps.toLocaleString() : '—'}<span> steps</span></div>
+                      ) : (
+                        <>
+                          <div className="exercise-card-weight">{ex.lastWeight}<span> kg</span></div>
+                          <div className="exercise-card-meta">
+                            {ex.lastSets} sets <span className="dot">·</span> {ex.lastReps} reps
+                          </div>
+                        </>
+                      )}
                       <div className="exercise-card-variation">
                         {dateStr && <span>{dateStr}</span>}
                         {dateStr && ex.variation ? ' · ' : ''}

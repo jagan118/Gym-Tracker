@@ -2,14 +2,14 @@ import { useState, useRef } from 'react';
 import { format } from 'date-fns';
 import { workoutAPI } from '../services/api';
 import useExerciseSearch, { clearExerciseSearchCache } from '../hooks/useExerciseSearch';
-import RestTimer from './RestTimer';
 import { MUSCLE_GROUPS, GROUP_COLORS } from '../constants/Musclegroups';
-import { notifyWorkoutDataChanged } from '../utils/workoutReminders';
 
 export default function AddWorkoutSheet({ onClose, onSaved, initialData, editId }) {
   const isEdit = Boolean(editId);
 
-  const [muscleGroup, setMuscleGroup] = useState(initialData?.muscleGroup || '');
+  const [muscleGroup, setMuscleGroup] = useState(
+    MUSCLE_GROUPS.includes(initialData?.muscleGroup) ? initialData.muscleGroup : ''
+  );
   const [exerciseName, setExerciseName] = useState(initialData?.exerciseName || '');
   const [variation, setVariation] = useState(initialData?.variation || '');
   const [workoutDate, setWorkoutDate] = useState(
@@ -20,6 +20,8 @@ export default function AddWorkoutSheet({ onClose, onSaved, initialData, editId 
   const [weightKg, setWeightKg] = useState(initialData?.weightKg ?? 20);
   const [sets, setSets] = useState(initialData?.sets ?? 3);
   const [repsPerSet, setRepsPerSet] = useState(initialData?.repsPerSet ?? 10);
+  const [stepsCount, setStepsCount] = useState(initialData?.stepsCount ?? '');
+  const isCardio = muscleGroup === 'Cardio';
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -52,6 +54,10 @@ export default function AddWorkoutSheet({ onClose, onSaved, initialData, editId 
   const handleSave = async () => {
     if (!exerciseName.trim()) { setError('Exercise name is required.'); return; }
     if (!muscleGroup) { setError('Choose a muscle group before saving.'); return; }
+    if (isCardio && (!Number.isInteger(Number(stepsCount)) || Number(stepsCount) < 1)) {
+      setError('Enter a step count greater than zero.');
+      return;
+    }
     setLoading(true);
     setError('');
     try {
@@ -60,9 +66,13 @@ export default function AddWorkoutSheet({ onClose, onSaved, initialData, editId 
         muscleGroup,
         variation: variation.trim(),
         workoutDate,
-        weightKg: Number(weightKg),
-        sets: Number(sets),
-        repsPerSet: Number(repsPerSet),
+        ...(isCardio
+          ? { stepsCount: Number(stepsCount) }
+          : {
+            weightKg: Number(weightKg),
+            sets: Number(sets),
+            repsPerSet: Number(repsPerSet),
+          }),
       };
       if (isEdit) {
         await workoutAPI.update(editId, payload);
@@ -70,7 +80,6 @@ export default function AddWorkoutSheet({ onClose, onSaved, initialData, editId 
         await workoutAPI.create(payload);
       }
       clearExerciseSearchCache();
-      notifyWorkoutDataChanged();
       onSaved();
       onClose();
     } catch (err) {
@@ -133,7 +142,7 @@ export default function AddWorkoutSheet({ onClose, onSaved, initialData, editId 
         {/* Exercise / Variation / Date */}
         <div className="sheet-section">
           <div className="sheet-row" onClick={() => { setActiveField('exercise'); setTimeout(() => exerciseRef.current?.focus(), 0); }}>
-            <span className="sheet-row-label">Exercise</span>
+            <span className="sheet-row-label">{isCardio ? 'Activity' : 'Exercise'}</span>
             {activeField === 'exercise' ? (
               <input
                 ref={exerciseRef}
@@ -142,7 +151,7 @@ export default function AddWorkoutSheet({ onClose, onSaved, initialData, editId 
                 onChange={e => setExerciseName(e.target.value)}
                 // delay so a tap on a suggestion registers before the list closes
                 onBlur={() => setTimeout(() => setActiveField(null), 200)}
-                placeholder="Bench Press, Squat…"
+                placeholder={isCardio ? 'Walking, Running…' : 'Bench Press, Squat…'}
                 autoFocus
               />
             ) : (
@@ -171,7 +180,7 @@ export default function AddWorkoutSheet({ onClose, onSaved, initialData, editId 
           {suggestionsError && <div className="sheet-hint" role="status" style={{ margin: 12 }}>{suggestionsError}</div>}
           {suggestionsLoading && <div className="sheet-hint" role="status" style={{ margin: 12 }}>Finding matching exercises…</div>}
 
-          <div className="sheet-row" onClick={() => { setActiveField('variation'); setTimeout(() => variationRef.current?.focus(), 0); }}>
+          {!isCardio && <div className="sheet-row" onClick={() => { setActiveField('variation'); setTimeout(() => variationRef.current?.focus(), 0); }}>
             <span className="sheet-row-label">Variation</span>
             {activeField === 'variation' ? (
               <input
@@ -185,7 +194,7 @@ export default function AddWorkoutSheet({ onClose, onSaved, initialData, editId 
             ) : (
               <span className="sheet-row-value">{variation || <span style={{ color: 'var(--text-muted)' }}>Optional</span>}</span>
             )}
-          </div>
+          </div>}
 
           <div className="sheet-row" onClick={() => { setActiveField('date'); setTimeout(() => dateRef.current?.showPicker?.(), 50); }}>
             <span className="sheet-row-label">Date</span>
@@ -203,7 +212,26 @@ export default function AddWorkoutSheet({ onClose, onSaved, initialData, editId 
           </div>
         </div>
 
-        {/* Weight / Sets / Reps steppers */}
+        {isCardio ? (
+          <div className="sheet-section cardio-entry">
+            <label className="cardio-step-row">
+              <span className="sheet-row-label">Steps counted</span>
+              <input
+                className="cardio-step-input"
+                type="number"
+                min="1"
+                max="1000000"
+                step="1"
+                inputMode="numeric"
+                value={stepsCount}
+                onChange={event => setStepsCount(event.target.value)}
+                placeholder="e.g. 6500"
+                aria-label="Steps counted"
+              />
+            </label>
+          </div>
+        ) : (
+        /* Weight / Sets / Reps steppers */
         <div className="sheet-section">
           <div className="sheet-row">
             <span className="sheet-row-label">Weight</span>
@@ -233,10 +261,7 @@ export default function AddWorkoutSheet({ onClose, onSaved, initialData, editId 
             </div>
           </div>
         </div>
-
-        <div className="sheet-section rest-timer-section">
-          <RestTimer />
-        </div>
+        )}
 
         <div className="sheet-buttons">
           <button className="sheet-save-btn" onClick={handleSave} disabled={loading}>

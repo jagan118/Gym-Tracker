@@ -6,7 +6,6 @@ import HomePage from './pages/HomePage';
 import MuscleGroupPage from './pages/MuscleGroupPage';
 import ExerciseHistoryPage from './pages/ExerciseHistoryPage';
 import AccountPage from './pages/AccountPage';
-import WorkoutReminderScheduler from './components/WorkoutReminderScheduler';
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
@@ -39,7 +38,6 @@ function PublicRoute({ children }) {
 function AppRoutes() {
   return (
     <>
-      <WorkoutReminderScheduler />
       <Routes>
         <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
         <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />

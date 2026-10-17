@@ -96,76 +96,39 @@ button:disabled { cursor: not-allowed; opacity: 0.5; }
   padding: 7px 0 0; color: var(--text-muted); font-size: 11px; line-height: 1.3;
 }
 .welcome-message strong {
-  max-width: 130px; overflow: hidden; color: var(--text-primary);
+  max-width: 96px; overflow: hidden; color: var(--text-primary);
   font-size: 14px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap;
 }
-.consistency-card {
-  display: flex; align-items: stretch; gap: 14px; padding: 14px;
-  margin: 0 0 18px; border: 1px solid var(--border); border-radius: var(--radius);
-  background: linear-gradient(135deg, var(--accent-soft), transparent 70%), var(--surface);
+.welcome-name-row { display: flex; align-items: center; justify-content: flex-end; gap: 7px; max-width: 210px; }
+.home-streak {
+  flex: 0 0 auto; padding: 4px 7px; border: 1px solid var(--border-strong);
+  border-radius: 999px; color: var(--accent); font-size: 9px; font-weight: 700;
+  white-space: nowrap;
 }
-.consistency-main { flex: 1; min-width: 0; }
-.consistency-heading, .consistency-footer {
-  display: flex; align-items: center; justify-content: space-between; gap: 8px;
-}
-.consistency-title { font-size: 14px; font-weight: 700; }
-.consistency-dates { margin-top: 2px; color: var(--text-muted); font-size: 11px; }
-.weekly-goal-select {
-  padding: 7px 9px; border: 1px solid var(--border-strong); border-radius: 10px;
-  background: var(--surface-2); color: var(--text-primary); font-size: 11px;
-}
-.goal-progress-track {
-  height: 7px; margin: 13px 0 7px; overflow: hidden;
-  border-radius: 999px; background: var(--surface-3);
-}
-.goal-progress-fill {
-  height: 100%; border-radius: inherit; background: var(--accent);
-  transition: width 0.25s ease;
-}
-.consistency-footer { color: var(--text-secondary); font-size: 10px; }
-.streak-stat {
-  min-width: 72px; display: flex; flex-direction: column; align-items: center; justify-content: center;
-  border-left: 1px solid var(--border); padding-left: 12px;
-}
-.streak-stat strong {
-  color: var(--accent); font-family: var(--font-display); font-size: 31px; line-height: 1;
-}
-.streak-stat span { margin-top: 4px; color: var(--text-muted); font-size: 10px; text-align: center; }
-.workout-reminder-card {
-  margin: 0 0 18px; padding: 14px; border: 1px solid var(--border);
+.home-rest-timer, .consistency-graph-card {
+  margin: 0 0 16px; padding: 14px; border: 1px solid var(--border);
   border-radius: var(--radius); background: var(--surface);
 }
-.workout-reminder-heading, .reminder-schedule {
-  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+.home-rest-timer { background: linear-gradient(135deg, var(--accent-soft), transparent 75%), var(--surface); }
+.consistency-graph-heading { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.consistency-graph-title { font-size: 14px; font-weight: 700; }
+.consistency-graph-subtitle { margin-top: 3px; color: var(--text-muted); font-size: 11px; }
+.consistency-legend { display: flex; align-items: center; gap: 5px; color: var(--text-muted); font-size: 10px; }
+.consistency-legend span { width: 8px; height: 8px; border-radius: 2px; background: var(--accent); }
+.consistency-graph {
+  display: grid; grid-template-columns: 22px repeat(12, minmax(0, 1fr));
+  gap: 4px; margin-top: 14px;
 }
-.workout-reminder-title { font-size: 14px; font-weight: 700; }
-.workout-reminder-help { margin-top: 3px; color: var(--text-muted); font-size: 11px; }
-.reminder-toggle {
-  min-height: 36px; padding: 7px 13px; border: 1px solid var(--border-strong);
-  border-radius: 999px; color: var(--text-secondary); font-size: 12px; font-weight: 700;
+.consistency-day-labels, .consistency-week { display: grid; grid-template-rows: repeat(7, 10px); gap: 4px; }
+.consistency-day-labels { color: var(--text-muted); font-size: 8px; line-height: 10px; }
+.consistency-week { min-width: 0; }
+.consistency-day {
+  width: 100%; max-width: 12px; height: 10px; justify-self: center;
+  border-radius: 3px; background: var(--surface-3);
 }
-.reminder-toggle.active { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
-.reminder-schedule { margin-top: 14px; flex-wrap: wrap; }
-.reminder-days { display: flex; align-items: center; gap: 5px; }
-.reminder-day {
-  width: 32px; height: 32px; border: 1px solid var(--border);
-  border-radius: 50%; background: var(--surface-2); color: var(--text-muted);
-  font-size: 11px; font-weight: 700;
-}
-.reminder-day.active { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
-.reminder-time-label {
-  display: flex; align-items: center; gap: 7px; color: var(--text-secondary); font-size: 12px;
-}
-.reminder-time-label input {
-  width: 100px; padding: 7px 8px; border: 1px solid var(--border-strong);
-  border-radius: 9px; background: var(--surface-2); color: var(--text-primary); font-size: 12px;
-}
-.timer-notification-option {
-  display: flex; align-items: center; gap: 8px; margin-top: 13px;
-  color: var(--text-secondary); font-size: 11px;
-}
-.timer-notification-option input { accent-color: var(--accent); }
-.reminder-feedback { margin-top: 10px; color: var(--danger); font-size: 11px; }
+.consistency-day.active { background: var(--accent); box-shadow: 0 0 7px var(--accent-soft); }
+.consistency-day.future { opacity: 0.25; }
+.consistency-graph-empty { margin-top: 10px; color: var(--text-muted); font-size: 11px; }
 .home-inline-error { margin: 0 0 12px; color: var(--danger); font-size: 12px; }
 .legacy-workouts-notice {
   display: flex; align-items: center; justify-content: space-between; gap: 12px;
@@ -516,7 +479,6 @@ button:disabled { cursor: not-allowed; opacity: 0.5; }
 }
 .sheet-save-btn:active:not(:disabled) { transform: scale(0.97); }
 .sheet-cancel-btn { height: 48px; border-radius: 999px; font-size: 15px; font-weight: 600; color: var(--text-secondary); }
-.rest-timer-section { padding: 14px; }
 .rest-timer { display: flex; flex-direction: column; gap: 12px; }
 .rest-timer-header, .rest-timer-controls, .rest-timer-actions {
   display: flex; align-items: center; justify-content: space-between; gap: 10px;
@@ -543,7 +505,33 @@ button:disabled { cursor: not-allowed; opacity: 0.5; }
 }
 .rest-timer-start { background: var(--accent); color: var(--accent-ink); }
 .rest-timer-reset { background: var(--surface-3); color: var(--text-secondary); }
-.rest-timer-done { color: var(--accent); font-size: 12px; font-weight: 600; }
+.rest-timer-done { color: var(--accent); font-size: 12px; font-weight: 700; }
+.rest-timer-finished .rest-timer-clock { animation: timer-alert 0.65s ease-in-out 3 alternate; }
+.rest-timer-notification-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.rest-timer-notification-button {
+  color: var(--text-muted); font-size: 10px; text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.rest-timer-notification-enabled, .rest-timer-permission-message {
+  color: var(--text-muted); font-size: 10px;
+}
+.rest-timer-permission-message { flex-basis: 100%; }
+@keyframes timer-alert {
+  from { box-shadow: 0 0 0 0 transparent; }
+  to { box-shadow: 0 0 0 3px var(--accent-glow); }
+}
+.cardio-entry { padding: 0; }
+.cardio-step-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  min-height: 62px; padding: 10px 14px;
+}
+.cardio-step-input {
+  width: 145px; min-height: 42px; padding: 8px 11px; border: 1px solid var(--border-strong);
+  border-radius: 10px; background: var(--surface); color: var(--text-primary);
+  text-align: right; font-size: 16px; font-variant-numeric: tabular-nums;
+}
+.cardio-step-input::placeholder { color: var(--text-muted); font-size: 13px; }
+.cardio-step-input:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 3px var(--accent-soft); }
 .sheet { max-height: 95dvh; }
 
 /* ── Confirm dialog ─────────────────────────────────────────────────────── */

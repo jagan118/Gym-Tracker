@@ -24,6 +24,7 @@ jest.mock('../controllers/workoutController', () => ({
 const express = require('express');
 const request = require('supertest');
 const workoutRoutes = require('../routes/workoutRoutes');
+const Workout = require('../models/Workout');
 
 const app = express();
 app.use(express.json());
@@ -42,6 +43,24 @@ describe('Workout creation validation', () => {
     expect(mockCreateWorkout).not.toHaveBeenCalled();
   });
 
+  describe('Workout cardio model validation', () => {
+    const cardioRecord = (stepsCount) => new Workout({
+      userId: '507f1f77bcf86cd799439011',
+      exerciseName: 'Walking',
+      muscleGroup: 'Cardio',
+      workoutDate: new Date('2026-10-18T00:00:00.000Z'),
+      ...(stepsCount === undefined ? {} : { stepsCount }),
+    });
+
+    it('allows cardio records with steps and without strength-training values', () => {
+      expect(cardioRecord(6500).validateSync()).toBeUndefined();
+    });
+
+    it('requires steps for cardio records', () => {
+      expect(cardioRecord().validateSync().errors.stepsCount).toBeDefined();
+    });
+  });
+
   it('accepts a valid explicitly selected muscle group', async () => {
     const response = await request(app)
       .post('/api/workouts')
@@ -55,5 +74,40 @@ describe('Workout creation validation', () => {
 
     expect(response.status).toBe(201);
     expect(mockCreateWorkout).toHaveBeenCalledTimes(1);
+  });
+
+  it('accepts cardio with a step count instead of weight, sets, and reps', async () => {
+    const response = await request(app)
+      .post('/api/workouts')
+      .send({ exerciseName: 'Walking', muscleGroup: 'Cardio', stepsCount: 6500 });
+
+    expect(response.status).toBe(201);
+    expect(mockCreateWorkout).toHaveBeenCalledTimes(1);
+  });
+
+  it('requires a positive integer step count for cardio', async () => {
+    const response = await request(app)
+      .post('/api/workouts')
+      .send({ exerciseName: 'Walking', muscleGroup: 'Cardio' });
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toContain('Step count');
+    expect(mockCreateWorkout).not.toHaveBeenCalled();
+  });
+
+  it('rejects muscle groups outside the supported choices', async () => {
+    const response = await request(app)
+      .post('/api/workouts')
+      .send({
+        exerciseName: 'Shoulder Press',
+        muscleGroup: 'Shoulders',
+        weightKg: 20,
+        sets: 3,
+        repsPerSet: 10,
+      });
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toBe('Invalid muscle group');
+    expect(mockCreateWorkout).not.toHaveBeenCalled();
   });
 });
