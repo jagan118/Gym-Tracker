@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
+import { Pencil, Trash2 } from 'lucide-react';
 import { format, differenceInDays } from 'date-fns';
 import { workoutAPI } from '../services/api';
 import TabBar from '../components/TabBar';
@@ -167,8 +168,10 @@ function InlineEditCard({ record, isPR, onSaved, onDelete }) {
                 className="record-action-btn"
                 onClick={() => { setEditing(true); setActionError(''); setWeightKg(record.weightKg); setSets(record.sets); setRepsPerSet(record.repsPerSet); }}
                 title="Edit" aria-label={`Edit record from ${dateLabel}`}
-              >Edit</button>
-              <button className="record-action-btn danger" onClick={() => setConfirmDelete(true)} title="Delete" aria-label={`Delete record from ${dateLabel}`}>Delete</button>
+              ><Pencil size={15} aria-hidden="true" />Edit</button>
+              <button className="record-action-btn danger" onClick={() => setConfirmDelete(true)} title="Delete" aria-label={`Delete record from ${dateLabel}`}>
+                <Trash2 size={15} aria-hidden="true" />Delete
+              </button>
             </>
           )}
         </div>

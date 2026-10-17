@@ -1,6 +1,23 @@
 const User = require('../models/User');
+const PasswordReset = require('../models/PasswordReset');
 const { signToken } = require('../middleware/auth');
 const verifyGoogleToken = require('../utils/googleVerify');
+const { createHmac, randomInt, timingSafeEqual } = require('crypto');
+const { isSmtpConfigured, sendPasswordResetEmail } = require('../utils/sendPasswordResetEmail');
+
+const RESET_CODE_TTL_MS = 10 * 60 * 1000;
+const RESET_CODE_RESEND_MS = 60 * 1000;
+const RESET_CODE_MAX_ATTEMPTS = 5;
+const RESET_CODE_MESSAGE = 'If an account exists for that email, a password reset code has been sent.';
+
+const hashResetCode = (email, code) =>
+  createHmac('sha256', process.env.JWT_SECRET).update(`${email}:${code}`).digest('hex');
+
+const hasMatchingCode = (storedHash, candidateHash) => {
+  const stored = Buffer.from(storedHash, 'hex');
+  const candidate = Buffer.from(candidateHash, 'hex');
+  return stored.length === candidate.length && timingSafeEqual(stored, candidate);
+};
 
 // ─── Register ────────────────────────────────────────────────────────────────
 
@@ -138,6 +155,98 @@ const googleAuth = async (req, res, next) => {
   }
 };
 
+// ─── Request password-reset code ────────────────────────────────────────────
+
+const requestPasswordReset = async (req, res, next) => {
+  try {
+    if (!isSmtpConfigured()) {
+      return res.status(503).json({
+        success: false,
+        message: 'Password reset email is unavailable. Ask the administrator to configure SMTP.',
+      });
+    }
+
+    const email = req.body.email.toLowerCase().trim();
+    const response = { success: true, message: RESET_CODE_MESSAGE };
+    const user = await User.findOne({ email });
+
+    if (!user) return res.json(response);
+
+    const previousReset = await PasswordReset.findOne({ email });
+    const now = Date.now();
+    if (previousReset && now - previousReset.lastSentAt.getTime() < RESET_CODE_RESEND_MS) {
+      return res.json(response);
+    }
+
+    const code = String(randomInt(100000, 1000000));
+    await sendPasswordResetEmail(email, code);
+
+    await PasswordReset.findOneAndUpdate(
+      { email },
+      {
+        $set: {
+          codeHash: hashResetCode(email, code),
+          attempts: 0,
+          lastSentAt: new Date(now),
+          expiresAt: new Date(now + RESET_CODE_TTL_MS),
+        },
+        $setOnInsert: { email },
+      },
+      { upsert: true, new: true, runValidators: true }
+    );
+
+    return res.json(response);
+  } catch (error) {
+    next(error);
+  }
+};
+
+// ─── Reset password with email code ─────────────────────────────────────────
+
+const resetPassword = async (req, res, next) => {
+  try {
+    const email = req.body.email.toLowerCase().trim();
+    const reset = await PasswordReset.findOne({ email, expiresAt: { $gt: new Date() } });
+
+    if (!reset || reset.attempts >= RESET_CODE_MAX_ATTEMPTS) {
+      return res.status(400).json({ success: false, message: 'The reset code is invalid or expired. Request a new code and try again.' });
+    }
+
+    const candidateHash = hashResetCode(email, req.body.code);
+    if (!hasMatchingCode(reset.codeHash, candidateHash)) {
+      await PasswordReset.updateOne(
+        { _id: reset._id, attempts: { $lt: RESET_CODE_MAX_ATTEMPTS } },
+        { $inc: { attempts: 1 } }
+      );
+      return res.status(400).json({ success: false, message: 'The reset code is invalid or expired. Request a new code and try again.' });
+    }
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      await PasswordReset.deleteOne({ _id: reset._id });
+      return res.status(400).json({ success: false, message: 'The reset code is invalid or expired. Request a new code and try again.' });
+    }
+
+    const consumed = await PasswordReset.findOneAndDelete({
+      _id: reset._id,
+      codeHash: candidateHash,
+      expiresAt: { $gt: new Date() },
+      attempts: { $lt: RESET_CODE_MAX_ATTEMPTS },
+    });
+    if (!consumed) {
+      return res.status(400).json({ success: false, message: 'The reset code is invalid or expired. Request a new code and try again.' });
+    }
+
+    user.passwordHash = req.body.password;
+    if (user.googleId) user.provider = 'both';
+    await user.save();
+
+    return res.json({ success: true, message: 'Password reset successfully. You can now sign in.' });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // ─── Set password for Google-authenticated account ───────────────────────────
 
 const setPassword = async (req, res, next) => {
@@ -196,4 +305,13 @@ const getMe = async (req, res, next) => {
   }
 };
 
-module.exports = { register, login, googleAuth, setPassword, logout, getMe };
+module.exports = {
+  register,
+  login,
+  googleAuth,
+  requestPasswordReset,
+  resetPassword,
+  setPassword,
+  logout,
+  getMe,
+};

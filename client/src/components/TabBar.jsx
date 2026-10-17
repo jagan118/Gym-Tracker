@@ -1,5 +1,5 @@
 import { useNavigate, useLocation } from 'react-router-dom';
-
+import { Dumbbell, UserRound } from "lucide-react";
 export default function TabBar() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -18,6 +18,9 @@ export default function TabBar() {
         aria-label="My Workouts"
         aria-current={isWorkouts ? 'page' : undefined}
       >
+        <span className="tab-icon-wrap" aria-hidden="true">
+          <Dumbbell size={21} strokeWidth={isWorkouts ? 2.4 : 1.8} />
+        </span>
         Workouts
       </button>
       <button
@@ -26,6 +29,9 @@ export default function TabBar() {
         aria-label="Account"
         aria-current={isAccount ? 'page' : undefined}
       >
+        <span className="tab-icon-wrap" aria-hidden="true">
+          <UserRound size={21} strokeWidth={isAccount ? 2.4 : 1.8} />
+        </span>
         Account
       </button>
     </nav>

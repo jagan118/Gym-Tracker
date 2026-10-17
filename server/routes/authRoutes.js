@@ -1,6 +1,15 @@
 const express = require('express');
 const { body } = require('express-validator');
-const { register, login, googleAuth, setPassword, logout, getMe } = require('../controllers/authController');
+const {
+  register,
+  login,
+  googleAuth,
+  requestPasswordReset,
+  resetPassword,
+  setPassword,
+  logout,
+  getMe,
+} = require('../controllers/authController');
 const { protect } = require('../middleware/auth');
 const validate = require('../middleware/validate');
 
@@ -39,6 +48,30 @@ router.post(
   [body('idToken').notEmpty().withMessage('Google ID token is required')],
   validate,
   googleAuth
+);
+
+// POST /api/auth/forgot-password
+router.post(
+  '/forgot-password',
+  [body('email').isEmail().withMessage('Please enter a valid email').normalizeEmail()],
+  validate,
+  requestPasswordReset
+);
+
+// POST /api/auth/reset-password
+router.post(
+  '/reset-password',
+  [
+    body('email').isEmail().withMessage('Please enter a valid email').normalizeEmail(),
+    body('code').isLength({ min: 6, max: 6 }).isNumeric().withMessage('Enter the 6-digit reset code'),
+    body('password')
+      .isLength({ min: 8 })
+      .withMessage('Password must be at least 8 characters')
+      .isLength({ max: 128 })
+      .withMessage('Password too long'),
+  ],
+  validate,
+  resetPassword
 );
 
 // POST /api/auth/password

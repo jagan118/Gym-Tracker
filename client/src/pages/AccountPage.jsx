@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { LogOut } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import TabBar from '../components/TabBar';
 import { authAPI } from '../services/api';
@@ -121,6 +122,7 @@ export default function AccountPage() {
 
           <div className="account-section" style={{ marginTop: 16 }}>
             <button className="account-row danger" onClick={handleLogout} style={{ width: '100%', textAlign: 'left' }}>
+              <LogOut size={18} aria-hidden="true" />
               <span className="account-row-text">Sign Out</span>
             </button>
           </div>

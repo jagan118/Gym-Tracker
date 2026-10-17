@@ -73,6 +73,18 @@
 			],
 			"isBackground": false,
 			"problemMatcher": []
+		},
+		{
+			"label": "Install password reset mail dependency",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"install",
+				"--prefix",
+				"server"
+			],
+			"isBackground": false,
+			"problemMatcher": []
 		}
 	]
 }
