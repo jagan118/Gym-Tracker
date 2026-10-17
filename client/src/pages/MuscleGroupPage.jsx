@@ -95,7 +95,22 @@ export default function MuscleGroupPage() {
                         </>
                       ) : (
                         <>
-                          <div className="exercise-card-weight">{ex.lastWeight}<span> kg</span></div>
+                          <div className="exercise-weight-row">
+                            <div className="exercise-card-weight">{ex.lastWeight}<span> kg</span></div>
+                            {Number.isFinite(ex.previousWeight) && ex.lastWeight !== ex.previousWeight && (
+                              <span
+                                className={`exercise-weight-change ${ex.lastWeight > ex.previousWeight ? 'increased' : 'decreased'}`}
+                                aria-label={ex.lastWeight > ex.previousWeight
+                                  ? `Weight increased by ${Number((ex.lastWeight - ex.previousWeight).toFixed(1))} kilograms`
+                                  : `Weight decreased by ${Number((ex.previousWeight - ex.lastWeight).toFixed(1))} kilograms`}
+                                title={ex.lastWeight > ex.previousWeight
+                                  ? `Up ${Number((ex.lastWeight - ex.previousWeight).toFixed(1))} kg since previous session`
+                                  : `Down ${Number((ex.previousWeight - ex.lastWeight).toFixed(1))} kg since previous session`}
+                              >
+                                {ex.lastWeight > ex.previousWeight ? '↑' : '↓'}
+                              </span>
+                            )}
+                          </div>
                           <div className="exercise-card-meta">
                             {ex.lastSets} sets <span className="dot">·</span> {ex.lastReps} reps
                           </div>

@@ -186,8 +186,8 @@ export default function HomePage() {
                   className="home-app-icon"
                   src="/Neon%20Dumbbell%20Circle%20Icon.png"
                   alt=""
-                  width="34"
-                  height="34"
+                  width="56"
+                  height="56"
                   fetchPriority="low"
                 />
                 <h1 className="page-title">My Workouts</h1>

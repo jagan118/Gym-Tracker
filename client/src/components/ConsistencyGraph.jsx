@@ -1,50 +1,52 @@
-import { addDays, format, startOfWeek, subWeeks } from 'date-fns';
+import { format, getDay, getDaysInMonth, startOfMonth } from 'date-fns';
 
-const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+const DAY_LABELS = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
 
 export default function ConsistencyGraph({ workoutDates, today }) {
-  const firstWeek = startOfWeek(subWeeks(today, 3), { weekStartsOn: 1 });
   const datesWithWorkouts = new Set(workoutDates);
-  const days = Array.from({ length: 4 * 7 }, (_, index) => addDays(firstWeek, index));
-  const activeDays = days.filter(day =>
-    day <= today && datesWithWorkouts.has(format(day, 'yyyy-MM-dd'))
-  ).length;
-  const weeks = Array.from({ length: 4 }, (_, weekIndex) =>
-    days.slice(weekIndex * 7, weekIndex * 7 + 7)
-  );
+  const monthStart = startOfMonth(today);
+  const daysInMonth = getDaysInMonth(today);
+  const elapsedDays = today.getDate();
+  const workoutDayCount = Array.from({ length: elapsedDays }, (_, index) => index + 1)
+    .filter(day => datesWithWorkouts.has(format(new Date(today.getFullYear(), today.getMonth(), day), 'yyyy-MM-dd')))
+    .length;
+  const percentage = Math.round((workoutDayCount / elapsedDays) * 100);
+  const calendarCells = [
+    ...Array.from({ length: getDay(monthStart) }, () => null),
+    ...Array.from({ length: daysInMonth }, (_, index) => index + 1),
+  ];
 
   return (
-    <section className="consistency-graph-card" aria-label="Workout consistency over the last 4 weeks">
+    <section className="consistency-graph-card" aria-label={`${format(today, 'MMMM')} workout consistency: ${percentage}%`}>
       <div className="consistency-graph-heading">
-        <div>
-          <h2 className="consistency-graph-title">Consistency</h2>
-          <div className="consistency-graph-subtitle">Last 4 weeks · {activeDays} workout days</div>
-        </div>
-        <div className="consistency-legend"><span /> Workout</div>
+        <h2 className="consistency-graph-title">
+          Consistency <span className="consistency-percentage">{percentage}%</span>
+        </h2>
+        <span className="consistency-month">{format(today, 'MMMM yyyy')}</span>
       </div>
-      <div className="consistency-graph" role="img" aria-label={`${activeDays} workout days in the last 4 weeks`}>
-        <div className="consistency-day-labels" aria-hidden="true">
-          {DAY_LABELS.map((label, index) => <span key={index}>{label}</span>)}
-        </div>
-        {weeks.map((week, weekIndex) => (
-          <div className="consistency-week" key={weekIndex}>
-            {week.map(day => {
-              const dateKey = format(day, 'yyyy-MM-dd');
-              const complete = day <= today && datesWithWorkouts.has(dateKey);
-              return (
-                <span
-                  key={dateKey}
-                  className={`consistency-day ${complete ? 'active' : ''} ${day > today ? 'future' : ''}`}
-                  title={`${format(day, 'MMM d, yyyy')}: ${complete ? 'workout logged' : 'no workout'}`}
-                />
-              );
-            })}
-          </div>
+      <div className="consistency-calendar" role="group" aria-label={`${format(today, 'MMMM')} workout calendar`}>
+        {DAY_LABELS.map(label => (
+          <span className="consistency-weekday" aria-hidden="true" key={label}>{label}</span>
         ))}
+        {calendarCells.map((day, index) => {
+          if (day === null) return <span className="consistency-calendar-empty" aria-hidden="true" key={`empty-${index}`} />;
+          const date = new Date(today.getFullYear(), today.getMonth(), day);
+          const dateKey = format(date, 'yyyy-MM-dd');
+          const future = day > elapsedDays;
+          const complete = !future && datesWithWorkouts.has(dateKey);
+          return (
+            <time
+              className={`consistency-calendar-day ${future ? 'future' : complete ? 'complete' : 'missed'}`}
+              dateTime={dateKey}
+              aria-label={`${format(date, 'MMMM d')}: ${future ? 'upcoming' : complete ? 'workout logged' : 'no workout'}`}
+              title={`${format(date, 'MMM d')}: ${future ? 'upcoming' : complete ? 'workout logged' : 'no workout'}`}
+              key={dateKey}
+            >
+              {day}
+            </time>
+          );
+        })}
       </div>
-      {activeDays === 0 && (
-        <div className="consistency-graph-empty">Your workout history will build this graph.</div>
-      )}
     </section>
   );
 }

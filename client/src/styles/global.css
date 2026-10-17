@@ -100,8 +100,8 @@ button:disabled { cursor: not-allowed; opacity: 0.5; }
   font-size: 14px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap;
 }
 .welcome-name-row { display: flex; align-items: center; justify-content: flex-end; gap: 7px; max-width: 210px; }
-.home-page-title-row { display: flex; align-items: center; gap: 9px; }
-.home-app-icon { width: 34px; height: 34px; object-fit: contain; border-radius: 9px; }
+.home-page-title-row { display: flex; align-items: center; gap: 8px; }
+.home-app-icon { width: 56px; height: 56px; flex: 0 0 56px; object-fit: contain; border-radius: 11px; }
 .home-page-title-row .page-title { margin-bottom: 18px; }
 .home-streak {
   flex: 0 0 auto; color: var(--accent); font-size: 20px; font-weight: 800;
@@ -112,25 +112,36 @@ button:disabled { cursor: not-allowed; opacity: 0.5; }
   border-radius: var(--radius); background: var(--surface);
 }
 .home-rest-timer { background: linear-gradient(135deg, var(--accent-soft), transparent 75%), var(--surface); }
-.consistency-graph-heading { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-.consistency-graph-title { font-size: 14px; font-weight: 700; }
-.consistency-graph-subtitle { margin-top: 3px; color: var(--text-muted); font-size: 11px; }
-.consistency-legend { display: flex; align-items: center; gap: 5px; color: var(--text-muted); font-size: 10px; }
-.consistency-legend span { width: 8px; height: 8px; border-radius: 2px; background: var(--accent); }
-.consistency-graph {
-  display: grid; grid-template-columns: 30px repeat(4, minmax(0, 1fr));
-  gap: 4px; margin-top: 14px;
+.consistency-graph-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 12px; }
+.consistency-graph-title { display: flex; align-items: baseline; gap: 7px; font-size: 15px; font-weight: 700; }
+.consistency-percentage { color: var(--accent); font-size: 14px; font-variant-numeric: tabular-nums; }
+.consistency-month { color: var(--text-muted); font-size: 11px; font-weight: 600; }
+.consistency-calendar {
+  display: grid; grid-template-columns: repeat(7, minmax(0, 1fr));
+  justify-items: center; align-items: center; gap: 4px 2px;
 }
-.consistency-day-labels, .consistency-week { display: grid; grid-template-rows: repeat(7, 12px); gap: 5px; }
-.consistency-day-labels { color: var(--text-muted); font-size: 9px; line-height: 12px; }
-.consistency-week { min-width: 0; }
-.consistency-day {
-  width: 100%; max-width: 24px; height: 12px; justify-self: center;
-  border-radius: 3px; background: var(--surface-3);
+.consistency-weekday {
+  width: 100%; padding-bottom: 3px; color: var(--text-muted);
+  font-size: 10px; font-weight: 700; text-align: center;
 }
-.consistency-day.active { background: var(--accent); box-shadow: 0 0 7px var(--accent-soft); }
-.consistency-day.future { opacity: 0.25; }
-.consistency-graph-empty { margin-top: 10px; color: var(--text-muted); font-size: 11px; }
+.consistency-calendar-day, .consistency-calendar-empty {
+  display: grid; width: 100%; max-width: 34px; aspect-ratio: 1; place-items: center;
+}
+.consistency-calendar-day {
+  border: 1px solid transparent; border-radius: 50%;
+  font-size: 12px; font-weight: 700; font-variant-numeric: tabular-nums;
+}
+.consistency-calendar-day.complete {
+  background: #22c55e; color: #062b17;
+  box-shadow: 0 0 10px rgba(34, 197, 94, 0.34);
+}
+.consistency-calendar-day.missed {
+  background: #ef4444; color: #fff;
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.22);
+}
+.consistency-calendar-day.future {
+  border-color: var(--border); color: var(--text-muted); opacity: 0.55;
+}
 .home-inline-error { margin: 0 0 12px; color: var(--danger); font-size: 12px; }
 .legacy-workouts-notice {
   display: flex; align-items: center; justify-content: space-between; gap: 12px;
@@ -248,7 +259,12 @@ button:disabled { cursor: not-allowed; opacity: 0.5; }
   font-family: var(--font-display); font-size: 40px; font-weight: 800;
   line-height: 1; color: var(--accent);
 }
+.exercise-list .exercise-card-weight { font-size: 46px; }
 .exercise-card-weight span { font-size: 16px; font-weight: 600; color: var(--text-secondary); }
+.exercise-weight-row { display: flex; align-items: baseline; gap: 9px; }
+.exercise-weight-change { font-size: 23px; font-weight: 900; line-height: 1; }
+.exercise-weight-change.increased { color: #22c55e; text-shadow: 0 0 9px rgba(34, 197, 94, 0.65); }
+.exercise-weight-change.decreased { color: #ef4444; text-shadow: 0 0 9px rgba(239, 68, 68, 0.65); }
 .exercise-card-meta { font-size: 13px; color: var(--text-secondary); margin-top: 4px; }
 .exercise-card-variation { font-size: 12px; color: var(--text-muted); margin-top: 6px; }
 
