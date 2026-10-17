@@ -87,6 +87,18 @@
 			],
 			"isBackground": false,
 			"problemMatcher": []
+		},
+		{
+			"label": "Update client build dependencies",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"install",
+				"--prefix",
+				"client"
+			],
+			"isBackground": false,
+			"problemMatcher": []
 		}
 	]
 }
