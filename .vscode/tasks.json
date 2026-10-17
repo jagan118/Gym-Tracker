@@ -44,7 +44,8 @@
 				"__tests__/googleAuth.test.js",
 				"__tests__/setPassword.test.js",
 				"__tests__/passwordReset.test.js",
-				"__tests__/health.test.js"
+				"__tests__/health.test.js",
+				"__tests__/workoutValidation.test.js"
 			],
 			"isBackground": false,
 			"problemMatcher": []
@@ -90,6 +91,18 @@
 		},
 		{
 			"label": "Update client build dependencies",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"install",
+				"--prefix",
+				"client"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Install RxJS search dependency",
 			"type": "shell",
 			"command": "npm",
 			"args": [

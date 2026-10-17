@@ -1,12 +1,13 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useRef } from 'react';
 import { format } from 'date-fns';
 import { workoutAPI } from '../services/api';
+import useExerciseSearch, { clearExerciseSearchCache } from '../hooks/useExerciseSearch';
 import { MUSCLE_GROUPS, GROUP_COLORS } from '../constants/Musclegroups';
 
 export default function AddWorkoutSheet({ onClose, onSaved, initialData, editId }) {
   const isEdit = Boolean(editId);
 
-  const [muscleGroup, setMuscleGroup] = useState(initialData?.muscleGroup || 'Other');
+  const [muscleGroup, setMuscleGroup] = useState(initialData?.muscleGroup || '');
   const [exerciseName, setExerciseName] = useState(initialData?.exerciseName || '');
   const [variation, setVariation] = useState(initialData?.variation || '');
   const [workoutDate, setWorkoutDate] = useState(
@@ -18,9 +19,6 @@ export default function AddWorkoutSheet({ onClose, onSaved, initialData, editId 
   const [sets, setSets] = useState(initialData?.sets ?? 3);
   const [repsPerSet, setRepsPerSet] = useState(initialData?.repsPerSet ?? 10);
 
-  const [suggestions, setSuggestions] = useState([]);
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const [suggestionsError, setSuggestionsError] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [activeField, setActiveField] = useState(null);
@@ -29,47 +27,19 @@ export default function AddWorkoutSheet({ onClose, onSaved, initialData, editId 
   const variationRef = useRef(null);
   const dateRef = useRef(null);
 
-  // Debounced exercise suggestions, scoped to the current muscle group
-  useEffect(() => {
-    if (activeField !== 'exercise' || !exerciseName.trim()) {
-      setSuggestions([]);
-      setShowSuggestions(false);
-      setSuggestionsError('');
-      return;
-    }
-    let current = true; // guards against stale responses
-    setSuggestionsError('');
-    const t = setTimeout(async () => {
-      try {
-        const res = await workoutAPI.getExercises({ search: exerciseName });
-        const all = res.data.exercises || [];
-        const filtered = all.filter(e =>
-          !muscleGroup || muscleGroup === 'Other' || e.muscleGroup === muscleGroup || !e.muscleGroup
-        );
-        if (current) {
-          setSuggestions(filtered.length ? filtered : all);
-          setShowSuggestions(true);
-        }
-      } catch (err) {
-        console.error('Failed to load exercise suggestions', err);
-        if (current) {
-          setSuggestions([]);
-          setSuggestionsError('Suggestions are unavailable. You can still enter a new exercise.');
-        }
-      }
-    }, 250);
-    return () => {
-      current = false;
-      clearTimeout(t);
-    };
-  }, [activeField, exerciseName, muscleGroup]);
+  const {
+    results: suggestions,
+    loading: suggestionsLoading,
+    error: suggestionsError,
+  } = useExerciseSearch(exerciseName, {
+    enabled: activeField === 'exercise',
+    muscleGroup,
+  });
+  const showSuggestions = activeField === 'exercise' && suggestions.length > 0;
 
   const pickSuggestion = (item) => {
     setExerciseName(item.exerciseName);
     setVariation(item.variation || '');
-    if (item.muscleGroup) setMuscleGroup(item.muscleGroup);
-    setSuggestions([]);
-    setShowSuggestions(false);
     setActiveField(null);
   };
 
@@ -79,6 +49,7 @@ export default function AddWorkoutSheet({ onClose, onSaved, initialData, editId 
 
   const handleSave = async () => {
     if (!exerciseName.trim()) { setError('Exercise name is required.'); return; }
+    if (!muscleGroup) { setError('Choose a muscle group before saving.'); return; }
     setLoading(true);
     setError('');
     try {
@@ -96,6 +67,7 @@ export default function AddWorkoutSheet({ onClose, onSaved, initialData, editId 
       } else {
         await workoutAPI.create(payload);
       }
+      clearExerciseSearchCache();
       onSaved();
       onClose();
     } catch (err) {
@@ -130,8 +102,8 @@ export default function AddWorkoutSheet({ onClose, onSaved, initialData, editId 
         {/* Muscle group chips */}
         {!isEdit && (
           <div style={{ padding: '0 16px 4px' }}>
-            <div className="group-picker-label">Muscle Group</div>
-            <div className="group-picker" role="group" aria-label="Choose a muscle group">
+            <div className="group-picker-label">Muscle Group <span aria-hidden="true">*</span></div>
+            <div className="group-picker" role="group" aria-label="Choose a muscle group" aria-required="true">
               {MUSCLE_GROUPS.map(g => {
                 const active = muscleGroup === g;
                 const color = GROUP_COLORS[g] || GROUP_COLORS.Other;
@@ -142,7 +114,10 @@ export default function AddWorkoutSheet({ onClose, onSaved, initialData, editId 
                     className={`group-chip ${active ? 'active' : ''}`}
                     style={{ '--group-color': color }}
                     aria-pressed={active}
-                    onClick={() => setMuscleGroup(g)}
+                    onClick={() => {
+                      setMuscleGroup(g);
+                      if (error) setError('');
+                    }}
                   >
                     {g}
                   </button>
@@ -191,6 +166,7 @@ export default function AddWorkoutSheet({ onClose, onSaved, initialData, editId 
             </div>
           )}
           {suggestionsError && <div className="sheet-hint" role="status" style={{ margin: 12 }}>{suggestionsError}</div>}
+          {suggestionsLoading && <div className="sheet-hint" role="status" style={{ margin: 12 }}>Finding matching exercises…</div>}
 
           <div className="sheet-row" onClick={() => { setActiveField('variation'); setTimeout(() => variationRef.current?.focus(), 0); }}>
             <span className="sheet-row-label">Variation</span>

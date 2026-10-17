@@ -87,6 +87,7 @@ describe('Workouts: Create', () => {
       .set('Authorization', `Bearer ${token1}`)
       .send({
         exerciseName: 'Incline Dumbbell Press',
+        muscleGroup: 'Chest',
         variation: 'Incline',
         workoutDate: '2026-10-14',
         weightKg: 12.5,
@@ -110,7 +111,7 @@ describe('Workouts: Create', () => {
     const res = await request(app)
       .post('/api/workouts')
       .set('Authorization', `Bearer ${token1}`)
-      .send({ exerciseName: 'Test', weightKg: -5, sets: 3, repsPerSet: 10 });
+      .send({ exerciseName: 'Test', muscleGroup: 'Other', weightKg: -5, sets: 3, repsPerSet: 10 });
     expect(res.status).toBe(400);
   });
 });
@@ -123,19 +124,19 @@ describe('Workouts: History Preservation — CRITICAL', () => {
     const r1 = await request(app)
       .post('/api/workouts')
       .set('Authorization', `Bearer ${token1}`)
-      .send({ exerciseName: 'Barbell Squat', workoutDate: '2026-10-14', weightKg: 80, sets: 4, repsPerSet: 6 });
+      .send({ exerciseName: 'Barbell Squat', muscleGroup: 'Legs', workoutDate: '2026-10-14', weightKg: 80, sets: 4, repsPerSet: 6 });
     record1Id = r1.body.workout._id;
 
     const r2 = await request(app)
       .post('/api/workouts')
       .set('Authorization', `Bearer ${token1}`)
-      .send({ exerciseName: 'Barbell Squat', workoutDate: '2026-10-15', weightKg: 85, sets: 4, repsPerSet: 6 });
+      .send({ exerciseName: 'Barbell Squat', muscleGroup: 'Legs', workoutDate: '2026-10-15', weightKg: 85, sets: 4, repsPerSet: 6 });
     record2Id = r2.body.workout._id;
 
     const r3 = await request(app)
       .post('/api/workouts')
       .set('Authorization', `Bearer ${token1}`)
-      .send({ exerciseName: 'Barbell Squat', workoutDate: '2026-10-16', weightKg: 90, sets: 4, repsPerSet: 5 });
+      .send({ exerciseName: 'Barbell Squat', muscleGroup: 'Legs', workoutDate: '2026-10-16', weightKg: 90, sets: 4, repsPerSet: 5 });
     record3Id = r3.body.workout._id;
   });
 
@@ -212,7 +213,7 @@ describe('Security: User Isolation', () => {
     const w = await request(app)
       .post('/api/workouts')
       .set('Authorization', `Bearer ${otherToken}`)
-      .send({ exerciseName: 'Bench Press', workoutDate: '2026-10-16', weightKg: 100, sets: 5, repsPerSet: 5 });
+      .send({ exerciseName: 'Bench Press', muscleGroup: 'Chest', workoutDate: '2026-10-16', weightKg: 100, sets: 5, repsPerSet: 5 });
     otherWorkoutId = w.body.workout._id;
   });
 

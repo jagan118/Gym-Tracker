@@ -2,12 +2,18 @@
 
 A secure, fast, mobile-first gym workout tracker built with **React + Vite**, **Express.js**, and **MongoDB Atlas**.
 
+The Home page supports hiding and restoring muscle-group cards without deleting
+workout history. Hidden groups are saved per account in the current browser.
+Exercise search is debounced, cancels stale requests, filters names and
+variations, and briefly caches matching results to avoid repeat API waits.
+New workout records require an explicit muscle-group selection.
+
 ---
 
 ## Quick Start (Local Development)
 
 ### Prerequisites
-- Node.js 18+
+- Node.js 22.x
 - A MongoDB Atlas account (free)
 - A Google Cloud project with OAuth credentials (optional for Google sign-in)
 

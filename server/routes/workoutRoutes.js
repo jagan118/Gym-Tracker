@@ -39,7 +39,7 @@ router.post(
   '/',
   [
     body('exerciseName').trim().notEmpty().withMessage('Exercise name is required').isLength({ max: 150 }).withMessage('Exercise name too long'),
-    body('muscleGroup').optional().isIn(['Chest', 'Back', 'Shoulders', 'Arms', 'Legs', 'Core', 'Cardio', 'Other']).withMessage('Invalid muscle group'),
+    body('muscleGroup').notEmpty().withMessage('Muscle group is required').bail().isIn(['Chest', 'Back', 'Shoulders', 'Arms', 'Legs', 'Core', 'Cardio', 'Other']).withMessage('Invalid muscle group'),
     body('variation').optional().isLength({ max: 100 }).withMessage('Variation too long'),
     body('workoutDate').optional().isISO8601().withMessage('Invalid date format'),
     body('weightKg').isFloat({ min: 0 }).withMessage('Weight must be 0 or greater'),

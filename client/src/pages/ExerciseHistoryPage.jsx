@@ -5,6 +5,7 @@ import { format, differenceInDays } from 'date-fns';
 import { workoutAPI } from '../services/api';
 import TabBar from '../components/TabBar';
 import AddWorkoutSheet from '../components/AddWorkoutSheet';
+import { clearExerciseSearchCache } from '../hooks/useExerciseSearch';
 import ConfirmDialog from '../components/ConfirmDialog';
 
 // ── Lightweight canvas line chart ─────────────────────────────────────────────
@@ -124,6 +125,7 @@ function InlineEditCard({ record, isPR, onSaved, onDelete }) {
     setActionError('');
     try {
       await workoutAPI.update(record._id, { weightKg: Number(weightKg), sets: Number(sets), repsPerSet: Number(repsPerSet) });
+      clearExerciseSearchCache();
       setEditing(false);
       onSaved();
     } catch (err) {
@@ -139,6 +141,7 @@ function InlineEditCard({ record, isPR, onSaved, onDelete }) {
     setActionError('');
     try {
       await workoutAPI.delete(record._id);
+      clearExerciseSearchCache();
       onDelete(record._id);
     } catch (err) {
       console.error('Delete failed', err);

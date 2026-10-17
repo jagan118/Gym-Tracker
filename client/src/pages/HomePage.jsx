@@ -2,50 +2,68 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { workoutAPI } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 import TabBar from '../components/TabBar';
 import AddWorkoutSheet from '../components/AddWorkoutSheet';
+import useExerciseSearch from '../hooks/useExerciseSearch';
 import { GROUP_COLORS } from '../constants/Musclegroups';
 
-function GroupCard({ group, onClick }) {
+function readHiddenGroups(storageKey) {
+  try {
+    const savedGroups = JSON.parse(localStorage.getItem(storageKey) || '[]');
+    return Array.isArray(savedGroups) ? savedGroups.filter(group => typeof group === 'string') : [];
+  } catch (error) {
+    console.warn('Could not read hidden muscle groups', error);
+    return [];
+  }
+}
+
+function GroupCard({ group, onOpen, onHide }) {
   const color = GROUP_COLORS[group.muscleGroup] || GROUP_COLORS.Other;
   const dateStr = (() => {
     try { return format(new Date(group.lastDate), 'MMM d'); } catch { return ''; }
   })();
 
   return (
-    <div
-      className="group-card"
-      style={{ '--c': color }}
-      onClick={onClick}
-      role="button"
-      tabIndex={0}
-      onKeyDown={e => {
-        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(); }
-      }}
-    >
-      <div className="group-card-body">
-        <div className="group-card-name">{group.muscleGroup}</div>
-        <div className="group-card-meta">
-          {group.exerciseCount} exercise{group.exerciseCount !== 1 ? 's' : ''}
-          <span className="dot"> · </span>
-          {group.totalSessions} session{group.totalSessions !== 1 ? 's' : ''}
+    <div className="group-card" style={{ '--c': color }}>
+      <button type="button" className="group-card-main" onClick={onOpen}>
+        <div className="group-card-body">
+          <div className="group-card-name">{group.muscleGroup}</div>
+          <div className="group-card-meta">
+            {group.exerciseCount} exercise{group.exerciseCount !== 1 ? 's' : ''}
+            <span className="dot"> · </span>
+            {group.totalSessions} session{group.totalSessions !== 1 ? 's' : ''}
+          </div>
+          {dateStr && <div className="group-card-date">Last: {dateStr}</div>}
         </div>
-        {dateStr && <div className="group-card-date">Last: {dateStr}</div>}
-      </div>
+      </button>
+      <button
+        type="button"
+        className="group-hide-btn"
+        onClick={onHide}
+        aria-label={`Hide ${group.muscleGroup} from home`}
+      >
+        Hide
+      </button>
     </div>
   );
 }
 
 export default function HomePage() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const hiddenGroupsKey = `gymlog_hidden_groups_${user?.id || user?._id || 'unknown'}`;
   const [groups, setGroups] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
   const [search, setSearch] = useState('');
-  const [searchResults, setSearchResults] = useState([]);
-  const [searchLoading, setSearchLoading] = useState(false);
-  const [searchError, setSearchError] = useState('');
+  const [hiddenGroups, setHiddenGroups] = useState(() => readHiddenGroups(hiddenGroupsKey));
   const [showSheet, setShowSheet] = useState(false);
+  const {
+    results: searchResults,
+    loading: searchLoading,
+    error: searchError,
+  } = useExerciseSearch(search);
 
   const loadGroups = useCallback(async () => {
     setLoading(true);
@@ -63,37 +81,26 @@ export default function HomePage() {
 
   useEffect(() => { loadGroups(); }, [loadGroups]);
 
-  // Debounced search across all exercises
   useEffect(() => {
-    const query = search.trim();
-    if (!query) {
-      setSearchResults([]);
-      setSearchError('');
-      setSearchLoading(false);
-      return;
-    }
-    let current = true;
-    setSearchLoading(true);
-    setSearchError('');
-    const t = setTimeout(async () => {
-      try {
-        const res = await workoutAPI.getExercises({ search: query });
-        if (current) setSearchResults(res.data.exercises || []);
-      } catch (err) {
-        console.error('Failed to search exercises', err);
-        if (current) {
-          setSearchResults([]);
-          setSearchError('Could not search workouts. Check your connection and try again.');
-        }
-      } finally {
-        if (current) setSearchLoading(false);
-      }
-    }, 300);
-    return () => {
-      current = false;
-      clearTimeout(t);
-    };
-  }, [search]);
+    localStorage.setItem(hiddenGroupsKey, JSON.stringify(hiddenGroups));
+  }, [hiddenGroups, hiddenGroupsKey]);
+
+  const visibleGroups = useMemo(
+    () => groups.filter(group => !hiddenGroups.includes(group.muscleGroup)),
+    [groups, hiddenGroups]
+  );
+  const hiddenExistingGroups = useMemo(
+    () => groups.filter(group => hiddenGroups.includes(group.muscleGroup)),
+    [groups, hiddenGroups]
+  );
+
+  const hideGroup = (muscleGroup) => {
+    setHiddenGroups(current => current.includes(muscleGroup) ? current : [...current, muscleGroup]);
+  };
+
+  const showGroup = (muscleGroup) => {
+    setHiddenGroups(current => current.filter(group => group !== muscleGroup));
+  };
 
   const goToHistory = (w) => {
     navigate(`/exercise/${encodeURIComponent(w.exerciseName)}`, {
@@ -187,23 +194,42 @@ export default function HomePage() {
               <div className="empty-state-title">{loadError}</div>
               <button className="retry-btn" onClick={loadGroups}>Try again</button>
             </div>
-          ) : groups.length === 0 ? (
+          ) : visibleGroups.length === 0 ? (
             <div className="empty-state">
-              <div className="empty-state-title">No workouts yet</div>
+              <div className="empty-state-title">{groups.length ? 'All muscle groups are hidden' : 'No workouts yet'}</div>
               <div className="empty-state-text">
-                Tap "Add Exercise", pick a muscle group, and log your first session.
+                {groups.length
+                  ? 'Use the Show button below to add a group back to your home page.'
+                  : 'Tap "Add Exercise", pick a muscle group, and log your first session.'}
               </div>
             </div>
           ) : (
             <div className="group-list">
-              {groups.map(g => (
+              {visibleGroups.map(g => (
                 <GroupCard
                   key={g.muscleGroup}
                   group={g}
-                  onClick={() => navigate(`/group/${encodeURIComponent(g.muscleGroup)}`)}
+                  onOpen={() => navigate(`/group/${encodeURIComponent(g.muscleGroup)}`)}
+                  onHide={() => hideGroup(g.muscleGroup)}
                 />
               ))}
             </div>
+          )}
+
+          {!search.trim() && hiddenExistingGroups.length > 0 && (
+            <section className="hidden-groups-section" aria-label="Hidden muscle groups">
+              <h2 className="hidden-groups-title">Hidden groups</h2>
+              <div className="hidden-groups-list">
+                {hiddenExistingGroups.map(group => (
+                  <div className="hidden-group-row" key={group.muscleGroup}>
+                    <span>{group.muscleGroup}</span>
+                    <button type="button" className="group-show-btn" onClick={() => showGroup(group.muscleGroup)}>
+                      Show
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </section>
           )}
         </div>
 

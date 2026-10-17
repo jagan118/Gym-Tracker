@@ -138,6 +138,10 @@ button:disabled { cursor: not-allowed; opacity: 0.5; }
 }
 .group-card:hover { border-color: color-mix(in srgb, var(--c) 45%, transparent); }
 .group-card:active { transform: scale(0.97); }
+.group-card-main {
+  flex: 1; min-width: 0; padding: 0; text-align: left;
+  color: inherit; background: transparent; cursor: pointer;
+}
 .group-card-body { flex: 1; min-width: 0; }
 .group-card-name {
   font-family: var(--font-display); font-size: 26px; font-weight: 700;
@@ -148,6 +152,27 @@ button:disabled { cursor: not-allowed; opacity: 0.5; }
   display: inline-block; margin-top: 8px; font-size: 11px; font-weight: 600;
   color: var(--c); background: color-mix(in srgb, var(--c) 14%, transparent);
   padding: 3px 9px; border-radius: 999px;
+}
+.group-hide-btn, .group-show-btn {
+  min-width: 52px; min-height: 40px; padding: 8px 12px;
+  border: 1px solid var(--border-strong); border-radius: 999px;
+  background: var(--surface-2); color: var(--text-secondary);
+  font-size: 12px; font-weight: 700; cursor: pointer;
+}
+.group-hide-btn:hover, .group-show-btn:hover {
+  border-color: var(--accent); color: var(--accent);
+}
+.hidden-groups-section { margin-top: 24px; }
+.hidden-groups-title {
+  margin: 0 0 10px; color: var(--text-muted);
+  font-size: 12px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
+}
+.hidden-groups-list { display: flex; flex-direction: column; gap: 8px; }
+.hidden-group-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 8px 10px 8px 14px; border: 1px solid var(--border);
+  border-radius: var(--radius); background: var(--surface);
+  color: var(--text-secondary); font-size: 14px;
 }
 .dot { color: var(--text-muted); }
 

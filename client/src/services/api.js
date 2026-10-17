@@ -50,7 +50,7 @@ export const authAPI = {
 
 export const workoutAPI = {
   getAll: (params) => api.get('/api/workouts', { params }),
-  getExercises: (params) => api.get('/api/workouts/exercises', { params }),
+  getExercises: (params, config = {}) => api.get('/api/workouts/exercises', { ...config, params }),
   getGroups: () => api.get('/api/workouts/groups'),
   getGroupExercises: (group) => api.get(`/api/workouts/groups/${encodeURIComponent(group)}`),
   getHistory: (exerciseName, params) =>
