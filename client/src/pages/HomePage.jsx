@@ -4,7 +4,7 @@ import { format } from 'date-fns';
 import { workoutAPI } from '../services/api';
 import TabBar from '../components/TabBar';
 import AddWorkoutSheet from '../components/AddWorkoutSheet';
-import { GROUP_COLORS } from '../constants/muscleGroups';
+import { GROUP_COLORS } from '../constants/Musclegroups';
 
 function GroupCard({ group, onClick }) {
   const color = GROUP_COLORS[group.muscleGroup] || GROUP_COLORS.Other;

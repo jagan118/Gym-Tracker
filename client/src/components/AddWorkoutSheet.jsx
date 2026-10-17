@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { format } from 'date-fns';
 import { workoutAPI } from '../services/api';
-import { MUSCLE_GROUPS, GROUP_COLORS } from '../constants/muscleGroups';
+import { MUSCLE_GROUPS, GROUP_COLORS } from '../constants/Musclegroups';
 
 export default function AddWorkoutSheet({ onClose, onSaved, initialData, editId }) {
   const isEdit = Boolean(editId);
