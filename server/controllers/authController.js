@@ -31,6 +31,8 @@ const register = async (req, res, next) => {
         id: user._id,
         name: user.name,
         email: user.email,
+        provider: user.provider,
+        hasPassword: Boolean(user.passwordHash),
       },
     });
   } catch (error) {
@@ -65,6 +67,8 @@ const login = async (req, res, next) => {
         id: user._id,
         name: user.name,
         email: user.email,
+        provider: user.provider,
+        hasPassword: Boolean(user.passwordHash),
       },
     });
   } catch (error) {
@@ -125,8 +129,35 @@ const googleAuth = async (req, res, next) => {
         id: user._id,
         name: user.name,
         email: user.email,
+        provider: user.provider,
+        hasPassword: Boolean(user.passwordHash),
       },
     });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// ─── Set password for Google-authenticated account ───────────────────────────
+
+const setPassword = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found.' });
+    }
+    if (!user.googleId) {
+      return res.status(403).json({
+        success: false,
+        message: 'A Google-linked account is required to set a password this way.',
+      });
+    }
+
+    user.passwordHash = req.body.password;
+    user.provider = 'both';
+    await user.save();
+
+    res.json({ success: true, message: 'Password saved. You can now sign in with your email and password.' });
   } catch (error) {
     next(error);
   }
@@ -156,6 +187,7 @@ const getMe = async (req, res, next) => {
         name: user.name,
         email: user.email,
         provider: user.provider,
+        hasPassword: Boolean(user.passwordHash),
         createdAt: user.createdAt,
       },
     });
@@ -164,4 +196,4 @@ const getMe = async (req, res, next) => {
   }
 };
 
-module.exports = { register, login, googleAuth, logout, getMe };
+module.exports = { register, login, googleAuth, setPassword, logout, getMe };

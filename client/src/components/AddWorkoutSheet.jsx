@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { format } from 'date-fns';
 import { workoutAPI } from '../services/api';
-import { MUSCLE_GROUPS } from '../constants/muscleGroups';
+import { MUSCLE_GROUPS, GROUP_COLORS } from '../constants/muscleGroups';
 
 export default function AddWorkoutSheet({ onClose, onSaved, initialData, editId }) {
   const isEdit = Boolean(editId);
@@ -131,14 +131,17 @@ export default function AddWorkoutSheet({ onClose, onSaved, initialData, editId 
         {!isEdit && (
           <div style={{ padding: '0 16px 4px' }}>
             <div className="group-picker-label">Muscle Group</div>
-            <div className="group-picker">
+            <div className="group-picker" role="group" aria-label="Choose a muscle group">
               {MUSCLE_GROUPS.map(g => {
                 const active = muscleGroup === g;
+                const color = GROUP_COLORS[g] || GROUP_COLORS.Other;
                 return (
                   <button
                     key={g}
                     type="button"
                     className={`group-chip ${active ? 'active' : ''}`}
+                    style={{ '--group-color': color }}
+                    aria-pressed={active}
                     onClick={() => setMuscleGroup(g)}
                   >
                     {g}

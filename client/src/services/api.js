@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const BASE_URL = import.meta.env.VITE_API_URL || '';
+const BASE_URL = (import.meta.env.VITE_API_URL || '').trim().replace(/\/+$/, '');
 
 const api = axios.create({
   baseURL: BASE_URL,
@@ -36,6 +36,7 @@ export const authAPI = {
   register: (data) => api.post('/api/auth/register', data),
   login: (data) => api.post('/api/auth/login', data),
   googleAuth: (idToken) => api.post('/api/auth/google', { idToken }),
+  setPassword: (password) => api.post('/api/auth/password', { password }),
   logout: () => api.post('/api/auth/logout'),
   getMe: () => api.get('/api/auth/me'),
 };

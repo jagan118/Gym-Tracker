@@ -97,12 +97,18 @@ VITE_API_URL=
 VITE_GOOGLE_CLIENT_ID=your-google-client-id.apps.googleusercontent.com
 ```
 
+Keep `VITE_API_URL` empty for local development so Vite proxies `/api` requests
+to `http://localhost:5000`. Set it to the deployed API URL only for production.
+
 Workouts are stored in MongoDB with the verified account's user ID. On Google sign-in,
 the server finds the same account by Google's stable subject ID (or links an existing
 account with the same verified email). Returning to the same Google account therefore
 loads that account's existing workout history. Keep the same `MONGODB_URI` and
 `JWT_SECRET` between runs; do not point the app at a temporary/local database if you
 want records to persist across machines and days.
+
+After signing in with Google, set or update an email/password login from the
+Account page. Passwords must be at least 8 characters.
 
 ---
 
@@ -182,6 +188,7 @@ Gym Tracker/
 | POST | `/api/auth/register` | Register with name, email, password |
 | POST | `/api/auth/login` | Login with email + password |
 | POST | `/api/auth/google` | Google OAuth |
+| POST | `/api/auth/password` | Set/update a password for a signed-in Google-linked account |
 | POST | `/api/auth/logout` | Logout |
 | GET | `/api/auth/me` | Get current user |
 

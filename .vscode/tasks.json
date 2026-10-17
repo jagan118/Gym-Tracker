@@ -41,7 +41,8 @@
 				"--",
 				"--runTestsByPath",
 				"__tests__/googleVerify.test.js",
-				"__tests__/googleAuth.test.js"
+				"__tests__/googleAuth.test.js",
+				"__tests__/setPassword.test.js"
 			],
 			"isBackground": false,
 			"problemMatcher": []
