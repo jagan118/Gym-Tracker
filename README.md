@@ -140,7 +140,8 @@ npm test
    - **Start command:** `node server.js`
    - **Environment:** Node
 5. Add environment variables in Render dashboard:
-   - All variables from `server/.env` with production values
+   - `MONGODB_URI`, `JWT_SECRET`, `GOOGLE_CLIENT_ID`, and any SMTP settings from `server/.env`
+   - Set `GOOGLE_CLIENT_ID` to the same Google OAuth Client ID used as `VITE_GOOGLE_CLIENT_ID` on the frontend (do not use the placeholder)
    - `CLIENT_ORIGIN=https://your-vercel-domain.vercel.app` (exact frontend origin, no path or trailing slash; the current Render frontend origin is also explicitly allowed)
    - Optionally use `CLIENT_ORIGINS` for multiple comma-separated production origins, such as Vercel preview domains
    - `NODE_ENV=production`
