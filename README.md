@@ -8,11 +8,14 @@ Exercise search is debounced, cancels stale requests, filters names and
 variations, and briefly caches matching results to avoid repeat API waits.
 New workout records require an explicit muscle-group selection.
 Workout categories are Chest, Tricep, Back, Bicep, Leg, Shoulder, Core, and
-Cardio. Cardio entries track steps; strength entries track weight, sets, and
-reps. The Home page shows the current streak and a 12-week consistency graph.
-The rest timer lives on Home, outside the workout form, and can play an alert
-and send a browser notification when it ends. Browser notifications require
-permission and are only delivered while GymLog is open.
+Cardio. Cardio entries track steps and can include an optional additional
+exercise and details; strength entries track weight, sets, and reps. The Home
+page shows the current streak and a standalone rest timer with one-minute
+adjustments. The Account page shows a four-week consistency graph with all
+weekday labels. Exercise history includes all records and an all-time chart
+range. The timer can play an alert and send a browser notification when it ends.
+Browser notifications require permission and are only delivered while GymLog is
+open.
 
 ---
 

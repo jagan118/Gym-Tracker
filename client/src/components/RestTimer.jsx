@@ -6,6 +6,8 @@ import {
 } from '../utils/workoutNotifications';
 
 const PRESETS = [60, 90, 120];
+const MIN_DURATION = 60;
+const MAX_DURATION = 3600;
 
 const formatTime = (seconds) => {
   const minutes = Math.floor(seconds / 60);
@@ -83,6 +85,20 @@ export default function RestTimer() {
     completionHandled.current = false;
   };
 
+  const adjustDuration = (minutes) => {
+    const changeInSeconds = minutes * 60;
+    setDuration(current => Math.min(MAX_DURATION, Math.max(MIN_DURATION, current + changeInSeconds)));
+    if (running) {
+      setDeadline(current => current === null ? null : current + changeInSeconds * 1000);
+    } else {
+      const adjustedRemaining = Math.max(0, remaining + changeInSeconds);
+      setRemaining(adjustedRemaining);
+      setFinished(adjustedRemaining === 0);
+    }
+    if (running) setFinished(false);
+    completionHandled.current = false;
+  };
+
   const toggleTimer = () => {
     if (running) {
       setRunning(false);
@@ -151,6 +167,26 @@ export default function RestTimer() {
               {formatTime(seconds)}
             </button>
           ))}
+        </div>
+        <div className="rest-timer-adjustments" aria-label="Adjust rest time">
+          <button
+            type="button"
+            className="rest-timer-adjust"
+            onClick={() => adjustDuration(-1)}
+            disabled={duration <= MIN_DURATION}
+            aria-label="Subtract one minute"
+          >
+            −1 min
+          </button>
+          <button
+            type="button"
+            className="rest-timer-adjust"
+            onClick={() => adjustDuration(1)}
+            disabled={duration >= MAX_DURATION}
+            aria-label="Add one minute"
+          >
+            +1 min
+          </button>
         </div>
         <div className="rest-timer-actions">
           <button type="button" className="rest-timer-start" onClick={toggleTimer}>

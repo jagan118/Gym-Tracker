@@ -108,6 +108,14 @@ export default function LoginPage() {
     <div className="auth-page">
       <div className="auth-card">
         <div className="auth-logo">
+          <img
+            className="auth-app-icon"
+            src="/Neon%20Dumbbell%20Circle%20Icon.png"
+            alt=""
+            width="64"
+            height="64"
+            fetchPriority="low"
+          />
           <div className="auth-logo-text">Gym<span>Log</span></div>
           <div className="auth-logo-sub">Track every rep. Crush every PR.</div>
         </div>

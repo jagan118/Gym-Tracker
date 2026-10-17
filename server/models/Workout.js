@@ -72,6 +72,20 @@ const workoutSchema = new mongoose.Schema(
       min: [1, 'Step count must be at least 1'],
       max: [1000000, 'Step count must be 1,000,000 or fewer'],
     },
+
+    cardioExerciseName: {
+      type: String,
+      trim: true,
+      maxlength: [100, 'Additional exercise name must be 100 characters or fewer'],
+      default: '',
+    },
+
+    cardioExerciseInfo: {
+      type: String,
+      trim: true,
+      maxlength: [200, 'Additional exercise information must be 200 characters or fewer'],
+      default: '',
+    },
   },
   {
     timestamps: true,

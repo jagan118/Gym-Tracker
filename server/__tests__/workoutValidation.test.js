@@ -79,10 +79,46 @@ describe('Workout creation validation', () => {
   it('accepts cardio with a step count instead of weight, sets, and reps', async () => {
     const response = await request(app)
       .post('/api/workouts')
-      .send({ exerciseName: 'Walking', muscleGroup: 'Cardio', stepsCount: 6500 });
+      .send({
+        exerciseName: 'Walking',
+        muscleGroup: 'Cardio',
+        stepsCount: 6500,
+        cardioExerciseName: 'Pushups',
+        cardioExerciseInfo: '50 reps',
+      });
 
     expect(response.status).toBe(201);
     expect(mockCreateWorkout).toHaveBeenCalledTimes(1);
+  });
+
+  it('rejects additional cardio exercise names that exceed the limit', async () => {
+    const response = await request(app)
+      .post('/api/workouts')
+      .send({
+        exerciseName: 'Walking',
+        muscleGroup: 'Cardio',
+        stepsCount: 6500,
+        cardioExerciseName: 'x'.repeat(101),
+      });
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toContain('Additional exercise name');
+    expect(mockCreateWorkout).not.toHaveBeenCalled();
+  });
+
+  it('rejects additional cardio details that exceed the limit', async () => {
+    const response = await request(app)
+      .post('/api/workouts')
+      .send({
+        exerciseName: 'Walking',
+        muscleGroup: 'Cardio',
+        stepsCount: 6500,
+        cardioExerciseInfo: 'x'.repeat(201),
+      });
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toContain('Additional exercise information');
+    expect(mockCreateWorkout).not.toHaveBeenCalled();
   });
 
   it('requires a positive integer step count for cardio', async () => {

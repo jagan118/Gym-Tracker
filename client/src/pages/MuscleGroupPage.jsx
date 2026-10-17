@@ -83,7 +83,16 @@ export default function MuscleGroupPage() {
                     <div className="exercise-card-left">
                       <div className="exercise-card-name">{ex.exerciseName}</div>
                       {decodedGroup === 'Cardio' ? (
-                        <div className="exercise-card-weight">{ex.lastSteps ? ex.lastSteps.toLocaleString() : '—'}<span> steps</span></div>
+                        <>
+                          <div className="exercise-card-weight">{ex.lastSteps ? ex.lastSteps.toLocaleString() : '—'}<span> steps</span></div>
+                          {(ex.lastCardioExerciseName || ex.lastCardioExerciseInfo) && (
+                            <div className="exercise-card-meta">
+                              {ex.lastCardioExerciseName}
+                              {ex.lastCardioExerciseName && ex.lastCardioExerciseInfo ? ' · ' : ''}
+                              {ex.lastCardioExerciseInfo}
+                            </div>
+                          )}
+                        </>
                       ) : (
                         <>
                           <div className="exercise-card-weight">{ex.lastWeight}<span> kg</span></div>

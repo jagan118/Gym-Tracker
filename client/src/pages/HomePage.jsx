@@ -7,7 +7,6 @@ import TabBar from '../components/TabBar';
 import AddWorkoutSheet from '../components/AddWorkoutSheet';
 import ConfirmDialog from '../components/ConfirmDialog';
 import RestTimer from '../components/RestTimer';
-import ConsistencyGraph from '../components/ConsistencyGraph';
 import useExerciseSearch from '../hooks/useExerciseSearch';
 import { GROUP_COLORS } from '../constants/Musclegroups';
 
@@ -182,14 +181,24 @@ export default function HomePage() {
           <div className="home-heading">
             <div>
               <div className="hero-eyebrow">{format(new Date(), 'EEEE, MMM d')}</div>
-              <h1 className="page-title">My Workouts</h1>
+              <div className="home-page-title-row">
+                <img
+                  className="home-app-icon"
+                  src="/Neon%20Dumbbell%20Circle%20Icon.png"
+                  alt=""
+                  width="34"
+                  height="34"
+                  fetchPriority="low"
+                />
+                <h1 className="page-title">My Workouts</h1>
+              </div>
             </div>
             <div className="welcome-message">
               <span>Welcome</span>
               <div className="welcome-name-row">
                 <strong>{user?.name?.split(/\s+/)[0] || 'back'}</strong>
-                <span className="home-streak" aria-label={`${weeklyStats.streak} day workout streak`}>
-                  {weeklyStats.streak} day streak
+                <span className="home-streak" aria-label={`${weeklyStats.streak} day workout streak`} title="Consecutive workout days">
+                  {weeklyStats.streak}
                 </span>
               </div>
             </div>
@@ -198,13 +207,7 @@ export default function HomePage() {
           <section className="home-rest-timer">
             <RestTimer />
           </section>
-
-          {!search.trim() && (
-            <>
-              <ConsistencyGraph workoutDates={consistency.workoutDates} today={weeklyStats.today} />
-              {consistencyError && <div className="home-inline-error" role="status">{consistencyError}</div>}
-            </>
-          )}
+          {consistencyError && <div className="home-inline-error" role="status">{consistencyError}</div>}
 
           {/* Stats strip — only when there's data and no active search */}
           {!loading && !loadError && groups.length > 0 && !search.trim() && (
@@ -274,7 +277,16 @@ export default function HomePage() {
                       </div>
                       <div className="exercise-card-name">{w.exerciseName}</div>
                       {w.muscleGroup === 'Cardio' ? (
-                        <div className="exercise-card-weight">{w.stepsCount ? w.stepsCount.toLocaleString() : '—'}<span> steps</span></div>
+                        <>
+                          <div className="exercise-card-weight">{w.stepsCount ? w.stepsCount.toLocaleString() : '—'}<span> steps</span></div>
+                          {(w.cardioExerciseName || w.cardioExerciseInfo) && (
+                            <div className="exercise-card-meta">
+                              {w.cardioExerciseName}
+                              {w.cardioExerciseName && w.cardioExerciseInfo ? ' · ' : ''}
+                              {w.cardioExerciseInfo}
+                            </div>
+                          )}
+                        </>
                       ) : (
                         <>
                           <div className="exercise-card-weight">{w.weightKg}<span> kg</span></div>

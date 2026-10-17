@@ -17,7 +17,7 @@ function ProgressChart({ records, filter, metricKey = 'weightKg', unit = 'kg' })
   // so the drawing effect below would re-run on every render.
   const filtered = useMemo(() => {
     const now = new Date();
-    const days = filter === '1M' ? 30 : filter === '3M' ? 90 : 365;
+    const days = filter === 'ALL' ? Infinity : filter === '1M' ? 30 : filter === '3M' ? 90 : 365;
     return records
       .filter(r => {
         if (metricKey === 'stepsCount' && !(Number(r.stepsCount) > 0)) return false;
@@ -47,8 +47,13 @@ function ProgressChart({ records, filter, metricKey = 'weightKg', unit = 'kg' })
     ctx.clearRect(0, 0, W, H);
 
     const values = filtered.map(r => Number(r[metricKey]) || 0);
-    const minimum = Math.min(...values);
-    const maximum = Math.max(...values);
+    const { minimum, maximum } = values.reduce(
+      (bounds, value) => ({
+        minimum: Math.min(bounds.minimum, value),
+        maximum: Math.max(bounds.maximum, value),
+      }),
+      { minimum: Infinity, maximum: -Infinity }
+    );
     const range = maximum - minimum || 1;
     const padX = 14, padY = 24;
     const chartW = W - padX * 2;
@@ -82,13 +87,16 @@ function ProgressChart({ records, filter, metricKey = 'weightKg', unit = 'kg' })
 
     // Dots + labels (thin out labels so they never overlap)
     const labelEvery = Math.max(1, Math.ceil(filtered.length / 6));
+    const showPoints = filtered.length <= 100;
     filtered.forEach((r, i) => {
       const value = values[i];
       const x = toX(i), y = toY(value);
-      ctx.beginPath(); ctx.arc(x, y, 5, 0, Math.PI * 2);
-      ctx.fillStyle = '#cbff47'; ctx.fill();
-      ctx.beginPath(); ctx.arc(x, y, 2.2, 0, Math.PI * 2);
-      ctx.fillStyle = '#131316'; ctx.fill();
+      if (showPoints) {
+        ctx.beginPath(); ctx.arc(x, y, 5, 0, Math.PI * 2);
+        ctx.fillStyle = '#cbff47'; ctx.fill();
+        ctx.beginPath(); ctx.arc(x, y, 2.2, 0, Math.PI * 2);
+        ctx.fillStyle = '#131316'; ctx.fill();
+      }
       if (i % labelEvery !== 0 && i !== filtered.length - 1) return;
       ctx.fillStyle = '#cbff47';
       ctx.font = '700 11px Inter,sans-serif';
@@ -116,6 +124,8 @@ function InlineEditCard({ record, isPR, onSaved, onDelete }) {
   const [sets, setSets] = useState(record.sets);
   const [repsPerSet, setRepsPerSet] = useState(record.repsPerSet);
   const [stepsCount, setStepsCount] = useState(record.stepsCount ?? '');
+  const [cardioExerciseName, setCardioExerciseName] = useState(record.cardioExerciseName || '');
+  const [cardioExerciseInfo, setCardioExerciseInfo] = useState(record.cardioExerciseInfo || '');
   const isCardio = record.muscleGroup === 'Cardio';
   const [saving, setSaving] = useState(false);
   const [actionError, setActionError] = useState('');
@@ -133,7 +143,11 @@ function InlineEditCard({ record, isPR, onSaved, onDelete }) {
     setActionError('');
     try {
       await workoutAPI.update(record._id, isCardio
-        ? { stepsCount: Number(stepsCount) }
+        ? {
+          stepsCount: Number(stepsCount),
+          cardioExerciseName: cardioExerciseName.trim(),
+          cardioExerciseInfo: cardioExerciseInfo.trim(),
+        }
         : { weightKg: Number(weightKg), sets: Number(sets), repsPerSet: Number(repsPerSet) });
       clearExerciseSearchCache();
       setEditing(false);
@@ -186,6 +200,8 @@ function InlineEditCard({ record, isPR, onSaved, onDelete }) {
                   setSets(record.sets);
                   setRepsPerSet(record.repsPerSet);
                   setStepsCount(record.stepsCount ?? '');
+                  setCardioExerciseName(record.cardioExerciseName || '');
+                  setCardioExerciseInfo(record.cardioExerciseInfo || '');
                 }}
                 title="Edit" aria-label={`Edit record from ${dateLabel}`}
               ><Pencil size={15} aria-hidden="true" />Edit</button>
@@ -200,20 +216,46 @@ function InlineEditCard({ record, isPR, onSaved, onDelete }) {
       {editing ? (
         <div className="record-edit-body">
           {isCardio ? (
-            <label className="record-edit-row">
-              <span className="record-edit-label">Steps counted</span>
-              <input
-                className="cardio-step-input"
-                type="number"
-                min="1"
-                max="1000000"
-                step="1"
-                inputMode="numeric"
-                value={stepsCount}
-                onChange={event => setStepsCount(event.target.value)}
-                aria-label="Steps counted"
-              />
-            </label>
+            <>
+              <label className="record-edit-row">
+                <span className="record-edit-label">Steps counted</span>
+                <input
+                  className="cardio-step-input"
+                  type="number"
+                  min="1"
+                  max="1000000"
+                  step="1"
+                  inputMode="numeric"
+                  value={stepsCount}
+                  onChange={event => setStepsCount(event.target.value)}
+                  aria-label="Steps counted"
+                />
+              </label>
+              <label className="record-edit-row">
+                <span className="record-edit-label">Additional exercise</span>
+                <input
+                  className="cardio-note-input"
+                  type="text"
+                  maxLength="100"
+                  value={cardioExerciseName}
+                  onChange={event => setCardioExerciseName(event.target.value)}
+                  placeholder="e.g. Pushups"
+                  aria-label="Additional exercise name"
+                />
+              </label>
+              <label className="record-edit-row">
+                <span className="record-edit-label">Exercise info</span>
+                <input
+                  className="cardio-note-input"
+                  type="text"
+                  maxLength="200"
+                  value={cardioExerciseInfo}
+                  onChange={event => setCardioExerciseInfo(event.target.value)}
+                  placeholder="e.g. 50 reps"
+                  aria-label="Additional exercise information"
+                />
+              </label>
+            </>
           ) : (
             <>
               <div className="record-edit-row">
@@ -253,7 +295,16 @@ function InlineEditCard({ record, isPR, onSaved, onDelete }) {
       ) : (
         <div className="record-view-body">
           {isCardio ? (
-            <div className="record-weight">{record.stepsCount?.toLocaleString() || '—'}<span> steps</span></div>
+            <>
+              <div className="record-weight">{record.stepsCount?.toLocaleString() || '—'}<span> steps</span></div>
+              {(record.cardioExerciseName || record.cardioExerciseInfo) && (
+                <div className="record-meta">
+                  {record.cardioExerciseName}
+                  {record.cardioExerciseName && record.cardioExerciseInfo ? ' · ' : ''}
+                  {record.cardioExerciseInfo}
+                </div>
+              )}
+            </>
           ) : (
             <>
               <div className="record-weight">{record.weightKg}<span> kg</span></div>
@@ -373,6 +424,13 @@ export default function ExerciseHistoryPage() {
                     <span>{isCardio ? ' steps' : ' kg'}</span>
                   </div>
                   {!isCardio && <div className="latest-meta">{latest.sets} sets <span className="dot">·</span> {latest.repsPerSet} reps</div>}
+                  {isCardio && (latest.cardioExerciseName || latest.cardioExerciseInfo) && (
+                    <div className="latest-meta">
+                      {latest.cardioExerciseName}
+                      {latest.cardioExerciseName && latest.cardioExerciseInfo ? ' · ' : ''}
+                      {latest.cardioExerciseInfo}
+                    </div>
+                  )}
                   {progressDiff !== null && (
                     <div className={`progress-tag ${progressClass}`}>
                       {progressDiff > 0 ? '↑ +' : progressDiff < 0 ? '↓ ' : '→ '}{progressDiff.toLocaleString()} {isCardio ? 'steps' : 'kg'} vs {format(new Date(previous.workoutDate), 'MMM d')}
@@ -402,8 +460,8 @@ export default function ExerciseHistoryPage() {
                 <div className="chart-header">
                   <span className="chart-label">{isCardio ? 'Steps Progress' : 'Weight Progress'}</span>
                   <div className="chart-filters">
-                    {['1M', '3M', '1Y'].map(f => (
-                      <button key={f} className={`chart-filter-btn ${chartFilter === f ? 'active' : ''}`} onClick={() => setChartFilter(f)}>{f}</button>
+                    {[['1M', '1M'], ['3M', '3M'], ['1Y', '1Y'], ['ALL', 'All time']].map(([value, label]) => (
+                      <button key={value} className={`chart-filter-btn ${chartFilter === value ? 'active' : ''}`} onClick={() => setChartFilter(value)}>{label}</button>
                     ))}
                   </div>
                 </div>

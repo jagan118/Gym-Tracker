@@ -21,6 +21,8 @@ export default function AddWorkoutSheet({ onClose, onSaved, initialData, editId 
   const [sets, setSets] = useState(initialData?.sets ?? 3);
   const [repsPerSet, setRepsPerSet] = useState(initialData?.repsPerSet ?? 10);
   const [stepsCount, setStepsCount] = useState(initialData?.stepsCount ?? '');
+  const [cardioExerciseName, setCardioExerciseName] = useState(initialData?.cardioExerciseName || '');
+  const [cardioExerciseInfo, setCardioExerciseInfo] = useState(initialData?.cardioExerciseInfo || '');
   const isCardio = muscleGroup === 'Cardio';
 
   const [loading, setLoading] = useState(false);
@@ -67,7 +69,11 @@ export default function AddWorkoutSheet({ onClose, onSaved, initialData, editId 
         variation: variation.trim(),
         workoutDate,
         ...(isCardio
-          ? { stepsCount: Number(stepsCount) }
+          ? {
+            stepsCount: Number(stepsCount),
+            cardioExerciseName: cardioExerciseName.trim(),
+            cardioExerciseInfo: cardioExerciseInfo.trim(),
+          }
           : {
             weightKg: Number(weightKg),
             sets: Number(sets),
@@ -229,6 +235,30 @@ export default function AddWorkoutSheet({ onClose, onSaved, initialData, editId 
                 aria-label="Steps counted"
               />
             </label>
+            <div className="cardio-notes">
+              <label className="cardio-note-row">
+                <span className="sheet-row-label">Additional exercise <span className="optional-label">(optional)</span></span>
+                <input
+                  className="cardio-note-input"
+                  type="text"
+                  maxLength="100"
+                  value={cardioExerciseName}
+                  onChange={event => setCardioExerciseName(event.target.value)}
+                  placeholder="e.g. Pushups"
+                />
+              </label>
+              <label className="cardio-note-row">
+                <span className="sheet-row-label">Exercise information</span>
+                <input
+                  className="cardio-note-input"
+                  type="text"
+                  maxLength="200"
+                  value={cardioExerciseInfo}
+                  onChange={event => setCardioExerciseInfo(event.target.value)}
+                  placeholder="e.g. 50 reps"
+                />
+              </label>
+            </div>
           </div>
         ) : (
         /* Weight / Sets / Reps steppers */

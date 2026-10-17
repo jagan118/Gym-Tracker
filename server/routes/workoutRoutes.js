@@ -55,6 +55,8 @@ router.post(
     body('sets').if((value, { req }) => req.body.muscleGroup !== 'Cardio').isInt({ min: 1, max: 100 }).withMessage('Sets must be between 1 and 100'),
     body('repsPerSet').if((value, { req }) => req.body.muscleGroup !== 'Cardio').isInt({ min: 1, max: 10000 }).withMessage('Reps must be between 1 and 10,000'),
     body('stepsCount').if((value, { req }) => req.body.muscleGroup === 'Cardio').isInt({ min: 1, max: 1000000 }).withMessage('Step count must be between 1 and 1,000,000'),
+    body('cardioExerciseName').optional().isString().isLength({ max: 100 }).withMessage('Additional exercise name must be 100 characters or fewer'),
+    body('cardioExerciseInfo').optional().isString().isLength({ max: 200 }).withMessage('Additional exercise information must be 200 characters or fewer'),
   ],
   validate,
   createWorkout
@@ -76,6 +78,8 @@ router.put(
     body('sets').optional().isInt({ min: 1, max: 100 }).withMessage('Sets must be between 1 and 100'),
     body('repsPerSet').optional().isInt({ min: 1, max: 10000 }),
     body('stepsCount').optional().isInt({ min: 1, max: 1000000 }).withMessage('Step count must be between 1 and 1,000,000'),
+    body('cardioExerciseName').optional().isString().isLength({ max: 100 }).withMessage('Additional exercise name must be 100 characters or fewer'),
+    body('cardioExerciseInfo').optional().isString().isLength({ max: 200 }).withMessage('Additional exercise information must be 200 characters or fewer'),
   ],
   validate,
   updateWorkout

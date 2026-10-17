@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LogOut } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import TabBar from '../components/TabBar';
-import { authAPI } from '../services/api';
+import ConsistencyGraph from '../components/ConsistencyGraph';
+import { authAPI, workoutAPI } from '../services/api';
 
 export default function AccountPage() {
   const { user, logout } = useAuth();
@@ -14,6 +15,33 @@ export default function AccountPage() {
   const [passwordError, setPasswordError] = useState('');
   const [passwordMessage, setPasswordMessage] = useState('');
   const [savingPassword, setSavingPassword] = useState(false);
+  const [consistencyRetry, setConsistencyRetry] = useState(0);
+  const [consistency, setConsistency] = useState({ workoutDates: [], today: null, loading: true, error: '' });
+
+  useEffect(() => {
+    let active = true;
+    workoutAPI.getConsistency()
+      .then(response => {
+        if (!active) return;
+        setConsistency({
+          workoutDates: response.data.workoutDates || [],
+          today: new Date(),
+          loading: false,
+          error: '',
+        });
+      })
+      .catch(error => {
+        console.error('Failed to load account workout consistency', error);
+        if (active) {
+          setConsistency(current => ({
+            ...current,
+            loading: false,
+            error: 'Workout consistency could not be loaded.',
+          }));
+        }
+      });
+    return () => { active = false; };
+  }, [consistencyRetry]);
 
   // "Avula Jagan" -> "AJ"
   const initials = user?.name
@@ -75,6 +103,25 @@ export default function AccountPage() {
               <span className="account-row-value">{user?.email}</span>
             </div>
           </div>
+
+          <section className="account-consistency" aria-label="Workout consistency">
+            {consistency.today && (
+              <ConsistencyGraph workoutDates={consistency.workoutDates} today={consistency.today} />
+            )}
+            {consistency.loading && <div className="account-consistency-message">Loading workout consistency…</div>}
+            {consistency.error && (
+              <div className="account-consistency-message" role="status">
+                {consistency.error}
+                <button
+                  type="button"
+                  className="account-consistency-retry"
+                  onClick={() => setConsistencyRetry(retry => retry + 1)}
+                >
+                  Try again
+                </button>
+              </div>
+            )}
+          </section>
 
           {(user?.provider === 'google' || user?.provider === 'both') && (
             <section className="account-section account-password" aria-labelledby="account-password-title">

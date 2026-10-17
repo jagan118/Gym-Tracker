@@ -6,7 +6,7 @@ const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 const createWorkout = async (req, res, next) => {
   try {
-    const { exerciseName, muscleGroup, variation, workoutDate, weightKg, sets, repsPerSet, stepsCount } = req.body;
+    const { exerciseName, muscleGroup, variation, workoutDate, weightKg, sets, repsPerSet, stepsCount, cardioExerciseName, cardioExerciseInfo } = req.body;
 
     // userId is ALWAYS taken from the verified JWT, never from the request body
     const workout = await Workout.create({
@@ -20,6 +20,8 @@ const createWorkout = async (req, res, next) => {
       sets,
       repsPerSet,
       stepsCount,
+      cardioExerciseName: cardioExerciseName || '',
+      cardioExerciseInfo: cardioExerciseInfo || '',
     });
 
     res.status(201).json({ success: true, workout });
@@ -112,6 +114,8 @@ const getExerciseNames = async (req, res, next) => {
           sets: { $first: '$sets' },
           repsPerSet: { $first: '$repsPerSet' },
           stepsCount: { $first: '$stepsCount' },
+          cardioExerciseName: { $first: '$cardioExerciseName' },
+          cardioExerciseInfo: { $first: '$cardioExerciseInfo' },
           exerciseNameNormalized: { $first: '$exerciseNameNormalized' },
         },
       },
@@ -128,6 +132,8 @@ const getExerciseNames = async (req, res, next) => {
           sets: 1,
           repsPerSet: 1,
           stepsCount: 1,
+          cardioExerciseName: 1,
+          cardioExerciseInfo: 1,
           exerciseNameNormalized: 1,
         },
       },
@@ -254,6 +260,8 @@ const getGroupExercises = async (req, res, next) => {
           lastSets: { $first: '$sets' },
           lastReps: { $first: '$repsPerSet' },
           lastSteps: { $first: '$stepsCount' },
+          lastCardioExerciseName: { $first: '$cardioExerciseName' },
+          lastCardioExerciseInfo: { $first: '$cardioExerciseInfo' },
           totalSessions: { $sum: 1 },
         },
       },
@@ -270,6 +278,8 @@ const getGroupExercises = async (req, res, next) => {
           lastSets: 1,
           lastReps: 1,
           lastSteps: 1,
+          lastCardioExerciseName: 1,
+          lastCardioExerciseInfo: 1,
           totalSessions: 1,
         },
       },
@@ -331,7 +341,7 @@ const getWorkout = async (req, res, next) => {
 
 const updateWorkout = async (req, res, next) => {
   try {
-    const { exerciseName, muscleGroup, variation, workoutDate, weightKg, sets, repsPerSet, stepsCount } = req.body;
+    const { exerciseName, muscleGroup, variation, workoutDate, weightKg, sets, repsPerSet, stepsCount, cardioExerciseName, cardioExerciseInfo } = req.body;
 
     const updateData = {};
     if (exerciseName !== undefined) updateData.exerciseName = exerciseName;
@@ -342,6 +352,8 @@ const updateWorkout = async (req, res, next) => {
     if (sets !== undefined) updateData.sets = sets;
     if (repsPerSet !== undefined) updateData.repsPerSet = repsPerSet;
     if (stepsCount !== undefined) updateData.stepsCount = stepsCount;
+    if (cardioExerciseName !== undefined) updateData.cardioExerciseName = cardioExerciseName;
+    if (cardioExerciseInfo !== undefined) updateData.cardioExerciseInfo = cardioExerciseInfo;
 
     // findOneAndUpdate with userId scope — only updates if user owns it
     const workout = await Workout.findOneAndUpdate(
