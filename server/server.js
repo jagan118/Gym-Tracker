@@ -15,11 +15,30 @@ const app = express();
 connectDB();
 
 // ─── CORS ─────────────────────────────────────────────────────────────────────
-const allowedOrigins = [
+const normalizeOrigin = (origin) => {
+  try {
+    return new URL(origin).origin;
+  } catch {
+    return null;
+  }
+};
+
+const configuredOrigins = [
+  process.env.CLIENT_ORIGINS,
   process.env.CLIENT_ORIGIN,
-  'http://localhost:5173', // Vite dev server
-  'http://127.0.0.1:5173', // Vite dev server via loopback IP
-].filter(Boolean);
+]
+  .filter(Boolean)
+  .flatMap((value) => value.split(','))
+  .map((origin) => normalizeOrigin(origin.trim()))
+  .filter(Boolean);
+
+const allowedOrigins = [
+  ...new Set([
+    ...configuredOrigins,
+    'http://localhost:5173', // Vite dev server
+    'http://127.0.0.1:5173', // Vite dev server via loopback IP
+  ]),
+];
 
 const isDevelopmentOrigin = (origin) => {
   if (process.env.NODE_ENV === 'production') return false;
@@ -40,7 +59,8 @@ app.use(
   cors({
     origin: (origin, callback) => {
       // Allow requests with no origin (e.g., Postman, mobile apps)
-      if (!origin || allowedOrigins.includes(origin) || isDevelopmentOrigin(origin)) {
+      const requestOrigin = origin ? normalizeOrigin(origin) : null;
+      if (!origin || allowedOrigins.includes(requestOrigin) || isDevelopmentOrigin(origin)) {
         callback(null, true);
       } else {
         callback(new Error(`CORS: Origin ${origin} not allowed`));

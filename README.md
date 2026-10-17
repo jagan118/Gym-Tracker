@@ -141,7 +141,8 @@ npm test
    - **Environment:** Node
 5. Add environment variables in Render dashboard:
    - All variables from `server/.env` with production values
-   - `CLIENT_ORIGIN=https://your-vercel-domain.vercel.app`
+   - `CLIENT_ORIGIN=https://your-vercel-domain.vercel.app` (exact frontend origin, no path or trailing slash)
+   - Optionally use `CLIENT_ORIGINS` for multiple comma-separated production origins, such as Vercel preview domains
    - `NODE_ENV=production`
 6. Copy your Render service URL (e.g. `https://gymlog-api.onrender.com`).
 
@@ -154,7 +155,7 @@ npm test
    - `VITE_GOOGLE_CLIENT_ID=your-google-client-id`
 4. Deploy → Vercel gives you a URL like `https://gymlog.vercel.app`.
 5. Go back to Google Cloud Console → add this Vercel URL to **Authorized JavaScript origins**.
-6. Go to Render → update `CLIENT_ORIGIN` to your Vercel URL.
+6. Go to Render → set `CLIENT_ORIGIN` to your Vercel URL (or add it to `CLIENT_ORIGINS`).
 
 ---
 

@@ -96,7 +96,7 @@ export default function LoginPage() {
       setError(
         err.response?.data?.message ||
         (!err.response
-          ? 'Could not reach the API. Check that the server is running and allows this local origin.'
+          ? 'Could not reach the API. Check the deployed API URL and make sure the backend allows this site in its CORS settings.'
           : 'Google sign-in failed. Please try again.')
       );
     } finally {
