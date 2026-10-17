@@ -35,6 +35,7 @@ const configuredOrigins = [
 const allowedOrigins = [
   ...new Set([
     ...configuredOrigins,
+    'https://gym-tracker-td9c.onrender.com',
     'http://localhost:5173', // Vite dev server
     'http://127.0.0.1:5173', // Vite dev server via loopback IP
   ]),

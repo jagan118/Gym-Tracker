@@ -141,7 +141,7 @@ npm test
    - **Environment:** Node
 5. Add environment variables in Render dashboard:
    - All variables from `server/.env` with production values
-   - `CLIENT_ORIGIN=https://your-vercel-domain.vercel.app` (exact frontend origin, no path or trailing slash)
+   - `CLIENT_ORIGIN=https://your-vercel-domain.vercel.app` (exact frontend origin, no path or trailing slash; the current Render frontend origin is also explicitly allowed)
    - Optionally use `CLIENT_ORIGINS` for multiple comma-separated production origins, such as Vercel preview domains
    - `NODE_ENV=production`
 6. Copy your Render service URL (e.g. `https://gymlog-api.onrender.com`).

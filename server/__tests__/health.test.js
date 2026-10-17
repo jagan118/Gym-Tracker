@@ -34,4 +34,17 @@ describe('API health routes', () => {
     expect(response.status).toBe(204);
     expect(response.headers['access-control-allow-origin']).toBe('https://preview.example.com');
   });
+
+  it('allows the deployed Gym Tracker frontend origin', async () => {
+    const response = await request(app)
+      .options('/api/auth/login')
+      .set('Origin', 'https://gym-tracker-td9c.onrender.com')
+      .set('Access-Control-Request-Method', 'POST')
+      .set('Access-Control-Request-Headers', 'content-type');
+
+    expect(response.status).toBe(204);
+    expect(response.headers['access-control-allow-origin']).toBe(
+      'https://gym-tracker-td9c.onrender.com'
+    );
+  });
 });
