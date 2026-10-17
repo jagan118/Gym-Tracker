@@ -1,0 +1,77 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "GymLog Client Dev",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"run",
+				"dev",
+				"--prefix",
+				"client",
+				"--",
+				"--host",
+				"127.0.0.1"
+			],
+			"isBackground": true,
+			"problemMatcher": []
+		},
+		{
+			"label": "GymLog Server Dev",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"run",
+				"dev",
+				"--prefix",
+				"server"
+			],
+			"isBackground": true,
+			"problemMatcher": []
+		},
+		{
+			"label": "GymLog Google Auth Tests",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"test",
+				"--prefix",
+				"server",
+				"--",
+				"--runTestsByPath",
+				"__tests__/googleVerify.test.js",
+				"__tests__/googleAuth.test.js"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "GymLog Client Build Check",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"run",
+				"build",
+				"--prefix",
+				"client"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "GymLog Client Lint Check",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"run",
+				"lint",
+				"--prefix",
+				"client"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		}
+	]
+}
