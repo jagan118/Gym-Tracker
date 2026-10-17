@@ -7,6 +7,7 @@ import TabBar from '../components/TabBar';
 import AddWorkoutSheet from '../components/AddWorkoutSheet';
 import { clearExerciseSearchCache } from '../hooks/useExerciseSearch';
 import ConfirmDialog from '../components/ConfirmDialog';
+import { notifyWorkoutDataChanged } from '../utils/workoutReminders';
 
 // ── Lightweight canvas line chart ─────────────────────────────────────────────
 function ProgressChart({ records, filter }) {
@@ -126,6 +127,7 @@ function InlineEditCard({ record, isPR, onSaved, onDelete }) {
     try {
       await workoutAPI.update(record._id, { weightKg: Number(weightKg), sets: Number(sets), repsPerSet: Number(repsPerSet) });
       clearExerciseSearchCache();
+      notifyWorkoutDataChanged();
       setEditing(false);
       onSaved();
     } catch (err) {
@@ -142,6 +144,7 @@ function InlineEditCard({ record, isPR, onSaved, onDelete }) {
     try {
       await workoutAPI.delete(record._id);
       clearExerciseSearchCache();
+      notifyWorkoutDataChanged();
       onDelete(record._id);
     } catch (err) {
       console.error('Delete failed', err);

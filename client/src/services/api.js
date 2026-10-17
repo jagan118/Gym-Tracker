@@ -52,6 +52,8 @@ export const workoutAPI = {
   getAll: (params) => api.get('/api/workouts', { params }),
   getExercises: (params, config = {}) => api.get('/api/workouts/exercises', { ...config, params }),
   getGroups: () => api.get('/api/workouts/groups'),
+  getConsistency: () => api.get('/api/workouts/consistency'),
+  deleteLegacyGroupWorkouts: () => api.delete('/api/workouts/legacy-groups'),
   getGroupExercises: (group) => api.get(`/api/workouts/groups/${encodeURIComponent(group)}`),
   getHistory: (exerciseName, params) =>
     api.get(`/api/workouts/history/${encodeURIComponent(exerciseName)}`, { params }),

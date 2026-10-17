@@ -1,12 +1,19 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { format } from 'date-fns';
+import { addDays, format, parseISO, startOfWeek, subDays } from 'date-fns';
 import { workoutAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import TabBar from '../components/TabBar';
 import AddWorkoutSheet from '../components/AddWorkoutSheet';
+import ConfirmDialog from '../components/ConfirmDialog';
+import WorkoutReminderSettings from '../components/WorkoutReminderSettings';
 import useExerciseSearch from '../hooks/useExerciseSearch';
 import { GROUP_COLORS } from '../constants/Musclegroups';
+import {
+  notifyReminderSettingsChanged,
+  notifyWorkoutDataChanged,
+  readWorkoutReminderSettings,
+} from '../utils/workoutReminders';
 
 function readHiddenGroups(storageKey) {
   try {
@@ -15,6 +22,16 @@ function readHiddenGroups(storageKey) {
   } catch (error) {
     console.warn('Could not read hidden muscle groups', error);
     return [];
+  }
+}
+
+function readWeeklyGoal(storageKey) {
+  try {
+    const value = Number(localStorage.getItem(storageKey));
+    return Number.isInteger(value) && value >= 1 && value <= 7 ? value : 3;
+  } catch (error) {
+    console.warn('Could not read weekly workout goal', error);
+    return 3;
   }
 }
 
@@ -52,12 +69,24 @@ function GroupCard({ group, onOpen, onHide }) {
 export default function HomePage() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const hiddenGroupsKey = `gymlog_hidden_groups_${user?.id || user?._id || 'unknown'}`;
+  const userId = user?.id || user?._id || 'unknown';
+  const hiddenGroupsKey = `gymlog_hidden_groups_${userId}`;
+  const weeklyGoalKey = `gymlog_weekly_goal_${userId}`;
+  const reminderSettingsKey = `gymlog_workout_reminders_${userId}`;
   const [groups, setGroups] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
   const [search, setSearch] = useState('');
   const [hiddenGroups, setHiddenGroups] = useState(() => readHiddenGroups(hiddenGroupsKey));
+  const [weeklyGoal, setWeeklyGoal] = useState(() => readWeeklyGoal(weeklyGoalKey));
+  const [reminderSettings, setReminderSettings] = useState(() =>
+    readWorkoutReminderSettings(reminderSettingsKey)
+  );
+  const [consistency, setConsistency] = useState({ workoutDates: [], invalidGroupCount: 0 });
+  const [consistencyError, setConsistencyError] = useState('');
+  const [cleanupError, setCleanupError] = useState('');
+  const [showCleanupConfirm, setShowCleanupConfirm] = useState(false);
+  const [cleanupLoading, setCleanupLoading] = useState(false);
   const [showSheet, setShowSheet] = useState(false);
   const {
     results: searchResults,
@@ -81,9 +110,46 @@ export default function HomePage() {
 
   useEffect(() => { loadGroups(); }, [loadGroups]);
 
+  const loadConsistency = useCallback(async () => {
+    setConsistencyError('');
+    try {
+      const response = await workoutAPI.getConsistency();
+      setConsistency({
+        workoutDates: response.data.workoutDates || [],
+        invalidGroupCount: response.data.invalidGroupCount || 0,
+      });
+    } catch (error) {
+      console.error('Failed to load workout consistency', error);
+      setConsistencyError('Weekly goal and streak data could not be loaded.');
+    }
+  }, []);
+
+  useEffect(() => { loadConsistency(); }, [loadConsistency]);
+
   useEffect(() => {
-    localStorage.setItem(hiddenGroupsKey, JSON.stringify(hiddenGroups));
+    try {
+      localStorage.setItem(hiddenGroupsKey, JSON.stringify(hiddenGroups));
+    } catch (error) {
+      console.error('Could not save hidden muscle groups', error);
+    }
   }, [hiddenGroups, hiddenGroupsKey]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(weeklyGoalKey, String(weeklyGoal));
+    } catch (error) {
+      console.error('Could not save weekly workout goal', error);
+    }
+  }, [weeklyGoal, weeklyGoalKey]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(reminderSettingsKey, JSON.stringify(reminderSettings));
+    } catch (error) {
+      console.error('Could not save workout reminder settings', error);
+    }
+    notifyReminderSettingsChanged(userId, reminderSettings);
+  }, [reminderSettings, reminderSettingsKey, userId]);
 
   const visibleGroups = useMemo(
     () => groups.filter(group => !hiddenGroups.includes(group.muscleGroup)),
@@ -115,12 +181,108 @@ export default function HomePage() {
     groups: groups.length,
   }), [groups]);
 
+  const weeklyStats = useMemo(() => {
+    const workoutDays = new Set(consistency.workoutDates);
+    const today = new Date();
+    const todayKey = format(today, 'yyyy-MM-dd');
+    const weekStart = startOfWeek(today, { weekStartsOn: 1 });
+    const weekEnd = addDays(weekStart, 6);
+    const thisWeekCount = new Set(consistency.workoutDates.filter(date => {
+      const workoutDay = parseISO(date);
+      return workoutDay >= weekStart && workoutDay <= today;
+    })).size;
+    let streak = 0;
+    let streakDay = workoutDays.has(todayKey) ? today : subDays(today, 1);
+    while (workoutDays.has(format(streakDay, 'yyyy-MM-dd'))) {
+      streak += 1;
+      streakDay = subDays(streakDay, 1);
+    }
+    return {
+      thisWeekCount,
+      streak,
+      weekStartLabel: format(weekStart, 'MMM d'),
+      weekEndLabel: format(weekEnd, 'MMM d'),
+    };
+  }, [consistency.workoutDates]);
+
+  const handleCleanupInvalidGroups = async () => {
+    setCleanupLoading(true);
+    setCleanupError('');
+    try {
+      const response = await workoutAPI.deleteLegacyGroupWorkouts();
+      if (response.data.deletedCount > 0) notifyWorkoutDataChanged();
+      setShowCleanupConfirm(false);
+      await Promise.all([loadGroups(), loadConsistency()]);
+      if (response.data.deletedCount === 0) {
+        setCleanupError('No ungrouped workout records were found.');
+      }
+    } catch (error) {
+      console.error('Failed to remove ungrouped workouts', error);
+      setCleanupError(error.response?.data?.message || 'Could not delete ungrouped records. Please try again.');
+    } finally {
+      setCleanupLoading(false);
+    }
+  };
+
   return (
     <div className="app-shell">
       <div className="page">
         <div className="page-inner">
-          <div className="hero-eyebrow">{format(new Date(), 'EEEE, MMM d')}</div>
-          <h1 className="page-title">My Workouts</h1>
+          <div className="home-heading">
+            <div>
+              <div className="hero-eyebrow">{format(new Date(), 'EEEE, MMM d')}</div>
+              <h1 className="page-title">My Workouts</h1>
+            </div>
+            <div className="welcome-message">
+              <span>Welcome</span>
+              <strong>{user?.name?.split(/\s+/)[0] || 'back'}</strong>
+            </div>
+          </div>
+
+          {!search.trim() && (
+            <section className="consistency-card" aria-label="Weekly workout goal and streak">
+              <div className="consistency-main">
+                <div className="consistency-heading">
+                  <div>
+                    <div className="consistency-title">Weekly goal</div>
+                    <div className="consistency-dates">{weeklyStats.weekStartLabel} – {weeklyStats.weekEndLabel}</div>
+                  </div>
+                  <label className="weekly-goal-select-label">
+                    <span className="sr-only">Workouts per week goal</span>
+                    <select
+                      className="weekly-goal-select"
+                      value={weeklyGoal}
+                      onChange={event => setWeeklyGoal(Number(event.target.value))}
+                      aria-label="Set weekly workout goal"
+                    >
+                      {[1, 2, 3, 4, 5, 6, 7].map(goal => (
+                        <option value={goal} key={goal}>{goal} / week</option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+                <div className="goal-progress-track" role="progressbar" aria-valuemin={0} aria-valuemax={weeklyGoal} aria-valuenow={Math.min(weeklyStats.thisWeekCount, weeklyGoal)}>
+                  <div className="goal-progress-fill" style={{ width: `${Math.min(100, (weeklyStats.thisWeekCount / weeklyGoal) * 100)}%` }} />
+                </div>
+                <div className="consistency-footer">
+                  <span>{weeklyStats.thisWeekCount} of {weeklyGoal} workouts</span>
+                  <span>{weeklyStats.thisWeekCount >= weeklyGoal ? 'Goal reached' : `${weeklyGoal - weeklyStats.thisWeekCount} to go`}</span>
+                </div>
+              </div>
+              <div className="streak-stat">
+                <strong>{weeklyStats.streak}</strong>
+                <span>day streak</span>
+              </div>
+              {consistencyError && <div className="home-inline-error" role="status">{consistencyError}</div>}
+            </section>
+          )}
+
+          {!search.trim() && (
+            <WorkoutReminderSettings
+              settings={reminderSettings}
+              onChange={setReminderSettings}
+            />
+          )}
 
           {/* Stats strip — only when there's data and no active search */}
           {!loading && !loadError && groups.length > 0 && !search.trim() && (
@@ -139,6 +301,19 @@ export default function HomePage() {
               </div>
             </div>
           )}
+
+          {!search.trim() && consistency.invalidGroupCount > 0 && (
+            <section className="legacy-workouts-notice">
+              <div>
+                <strong>{consistency.invalidGroupCount} ungrouped workout{consistency.invalidGroupCount === 1 ? '' : 's'}</strong>
+                <span>These older records have no valid muscle group.</span>
+              </div>
+              <button type="button" className="legacy-delete-btn" onClick={() => setShowCleanupConfirm(true)}>
+                Delete
+              </button>
+            </section>
+          )}
+          {cleanupError && <div className="home-inline-error" role="alert">{cleanupError}</div>}
 
           <div className="search-bar">
             <input
@@ -243,7 +418,19 @@ export default function HomePage() {
       {showSheet && (
         <AddWorkoutSheet
           onClose={() => setShowSheet(false)}
-          onSaved={() => loadGroups()}
+          onSaved={() => {
+            loadGroups();
+            loadConsistency();
+          }}
+        />
+      )}
+      {showCleanupConfirm && (
+        <ConfirmDialog
+          title="Delete ungrouped workouts?"
+          message={`This permanently deletes ${consistency.invalidGroupCount} workout record${consistency.invalidGroupCount === 1 ? '' : 's'} with a missing or invalid muscle group. Other records are not affected.`}
+          onConfirm={handleCleanupInvalidGroups}
+          onCancel={() => setShowCleanupConfirm(false)}
+          loading={cleanupLoading}
         />
       )}
     </div>

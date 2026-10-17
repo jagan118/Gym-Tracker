@@ -86,10 +86,15 @@ const getExerciseNames = async (req, res, next) => {
     const matchStage = { userId: new (require('mongoose').Types.ObjectId)(req.user.id) };
 
     if (typeof search === 'string' && search.trim()) {
+      const searchRegex = { $regex: escapeRegex(search.trim()), $options: 'i' };
       matchStage.exerciseNameNormalized = {
-        $regex: escapeRegex(search.trim()),
-        $options: 'i',
+        ...searchRegex,
       };
+      matchStage.$or = [
+        { exerciseNameNormalized: searchRegex },
+        { variation: searchRegex },
+      ];
+      delete matchStage.exerciseNameNormalized;
     }
 
     // Return the latest record for each exercise/variation pair for the user
@@ -160,6 +165,67 @@ const getGroups = async (req, res, next) => {
     ]);
 
     res.json({ success: true, groups });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const getConsistency = async (req, res, next) => {
+  try {
+    const mongoose = require('mongoose');
+    const userId = new mongoose.Types.ObjectId(req.user.id);
+    const invalidGroupFilter = {
+      userId,
+      $or: [
+        { muscleGroup: { $exists: false } },
+        { muscleGroup: null },
+        { muscleGroup: '' },
+        { muscleGroup: { $regex: '^null$', $options: 'i' } },
+      ],
+    };
+    const [workoutDates, invalidGroupCount] = await Promise.all([
+      Workout.aggregate([
+        { $match: { userId } },
+        {
+          $group: {
+            _id: {
+              $dateToString: { format: '%Y-%m-%d', date: '$workoutDate', timezone: 'UTC' },
+            },
+          },
+        },
+        { $sort: { _id: 1 } },
+        { $project: { _id: 0, date: '$_id' } },
+      ]),
+      Workout.countDocuments(invalidGroupFilter),
+    ]);
+
+    res.json({
+      success: true,
+      workoutDates: workoutDates.map(({ date }) => date),
+      invalidGroupCount,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const deleteInvalidGroupWorkouts = async (req, res, next) => {
+  try {
+    const result = await Workout.deleteMany({
+      userId: req.user.id,
+      $or: [
+        { muscleGroup: { $exists: false } },
+        { muscleGroup: null },
+        { muscleGroup: '' },
+        { muscleGroup: { $regex: '^null$', $options: 'i' } },
+      ],
+    });
+
+    res.json({
+      success: true,
+      deletedCount: result.deletedCount,
+      message: `${result.deletedCount} workout record${result.deletedCount === 1 ? '' : 's'} deleted.`,
+    });
   } catch (error) {
     next(error);
   }
@@ -310,6 +376,8 @@ module.exports = {
   getWorkouts,
   getExerciseNames,
   getGroups,
+  getConsistency,
+  deleteInvalidGroupWorkouts,
   getGroupExercises,
   getExerciseHistory,
   getWorkout,

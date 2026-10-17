@@ -12,6 +12,8 @@ jest.mock('../controllers/workoutController', () => ({
   getWorkouts: jest.fn(),
   getExerciseNames: jest.fn(),
   getGroups: jest.fn(),
+  getConsistency: (req, res) => res.json({ success: true, workoutDates: [], invalidGroupCount: 0 }),
+  deleteInvalidGroupWorkouts: (req, res) => res.json({ success: true, deletedCount: 0 }),
   getGroupExercises: jest.fn(),
   getExerciseHistory: jest.fn(),
   getWorkout: jest.fn(),

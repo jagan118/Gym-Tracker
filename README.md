@@ -7,6 +7,11 @@ workout history. Hidden groups are saved per account in the current browser.
 Exercise search is debounced, cancels stale requests, filters names and
 variations, and briefly caches matching results to avoid repeat API waits.
 New workout records require an explicit muscle-group selection.
+The Home page also tracks a configurable weekly workout target and current streak.
+It supports local-browser workout reminders on selected days and times, plus an
+optional notification when the rest timer completes. Browser notifications must
+be explicitly allowed; scheduled reminders fire only while GymLog is open and
+are stored per account in that browser.
 
 ---
 

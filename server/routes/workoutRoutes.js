@@ -5,6 +5,8 @@ const {
   getWorkouts,
   getExerciseNames,
   getGroups,
+  getConsistency,
+  deleteInvalidGroupWorkouts,
   getGroupExercises,
   getExerciseHistory,
   getWorkout,
@@ -24,6 +26,12 @@ router.get('/exercises', getExerciseNames);
 
 // GET /api/workouts/groups — muscle group summary cards
 router.get('/groups', getGroups);
+
+// GET /api/workouts/consistency — workout dates and legacy invalid-group count
+router.get('/consistency', getConsistency);
+
+// DELETE /api/workouts/legacy-groups — remove this user's invalid-group records
+router.delete('/legacy-groups', deleteInvalidGroupWorkouts);
 
 // GET /api/workouts/groups/:group — exercises inside a muscle group
 router.get('/groups/:group', getGroupExercises);

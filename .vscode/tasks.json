@@ -45,7 +45,8 @@
 				"__tests__/setPassword.test.js",
 				"__tests__/passwordReset.test.js",
 				"__tests__/health.test.js",
-				"__tests__/workoutValidation.test.js"
+				"__tests__/workoutValidation.test.js",
+				"__tests__/workoutOverview.test.js"
 			],
 			"isBackground": false,
 			"problemMatcher": []

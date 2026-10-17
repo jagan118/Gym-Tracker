@@ -2,7 +2,9 @@ import { useState, useRef } from 'react';
 import { format } from 'date-fns';
 import { workoutAPI } from '../services/api';
 import useExerciseSearch, { clearExerciseSearchCache } from '../hooks/useExerciseSearch';
+import RestTimer from './RestTimer';
 import { MUSCLE_GROUPS, GROUP_COLORS } from '../constants/Musclegroups';
+import { notifyWorkoutDataChanged } from '../utils/workoutReminders';
 
 export default function AddWorkoutSheet({ onClose, onSaved, initialData, editId }) {
   const isEdit = Boolean(editId);
@@ -68,6 +70,7 @@ export default function AddWorkoutSheet({ onClose, onSaved, initialData, editId 
         await workoutAPI.create(payload);
       }
       clearExerciseSearchCache();
+      notifyWorkoutDataChanged();
       onSaved();
       onClose();
     } catch (err) {
@@ -138,7 +141,7 @@ export default function AddWorkoutSheet({ onClose, onSaved, initialData, editId 
                 value={exerciseName}
                 onChange={e => setExerciseName(e.target.value)}
                 // delay so a tap on a suggestion registers before the list closes
-                onBlur={() => setTimeout(() => { setActiveField(null); setShowSuggestions(false); }, 200)}
+                onBlur={() => setTimeout(() => setActiveField(null), 200)}
                 placeholder="Bench Press, Squat…"
                 autoFocus
               />
@@ -229,6 +232,10 @@ export default function AddWorkoutSheet({ onClose, onSaved, initialData, editId 
               <button type="button" className="stepper-btn" onClick={() => setRepsPerSet(r => Math.min(10000, r + 1))} aria-label="Increase reps">+</button>
             </div>
           </div>
+        </div>
+
+        <div className="sheet-section rest-timer-section">
+          <RestTimer />
         </div>
 
         <div className="sheet-buttons">

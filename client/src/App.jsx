@@ -6,6 +6,7 @@ import HomePage from './pages/HomePage';
 import MuscleGroupPage from './pages/MuscleGroupPage';
 import ExerciseHistoryPage from './pages/ExerciseHistoryPage';
 import AccountPage from './pages/AccountPage';
+import WorkoutReminderScheduler from './components/WorkoutReminderScheduler';
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
@@ -37,15 +38,18 @@ function PublicRoute({ children }) {
 
 function AppRoutes() {
   return (
-    <Routes>
-      <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
-      <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
-      <Route path="/" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
-      <Route path="/group/:group" element={<ProtectedRoute><MuscleGroupPage /></ProtectedRoute>} />
-      <Route path="/exercise/:exerciseName" element={<ProtectedRoute><ExerciseHistoryPage /></ProtectedRoute>} />
-      <Route path="/account" element={<ProtectedRoute><AccountPage /></ProtectedRoute>} />
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+    <>
+      <WorkoutReminderScheduler />
+      <Routes>
+        <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
+        <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
+        <Route path="/" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
+        <Route path="/group/:group" element={<ProtectedRoute><MuscleGroupPage /></ProtectedRoute>} />
+        <Route path="/exercise/:exerciseName" element={<ProtectedRoute><ExerciseHistoryPage /></ProtectedRoute>} />
+        <Route path="/account" element={<ProtectedRoute><AccountPage /></ProtectedRoute>} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </>
   );
 }
 
